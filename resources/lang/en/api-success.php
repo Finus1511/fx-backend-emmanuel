@@ -324,4 +324,18 @@ return [
 
     835 => "The live stream shopping viewer count updated successfully!",
 
+    836 => "Coupon code applied success!",
+
+    837 => "The Mermaid details was created successfully.!",
+
+    838 => "The Mermaid details was updated successfully.!",
+
+    839 => "The Mermaid file was deleted successfully.!",
+
+    840 => "The Mermaid details was deleted successfully.!",
+
+    841 => "The promo code is activated.",
+
+    842 => "The promo code is deactivated."
+
 ];

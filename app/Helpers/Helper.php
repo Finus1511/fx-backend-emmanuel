@@ -4,13 +4,13 @@ namespace App\Helpers;
 
 use Mailgun\Mailgun;
 
-use Hash, Exception, Auth, Mail, File, Log, Storage, Setting, DB, Validator, Image;
+use Hash, Exception, Auth, Mail, File, Log, Storage, Setting, DB, Validator, Image, Str;
 
 use App\Models\Admin, App\Models\User, App\ContentCreator, App\Models\StaticPage;
 
 use App\Models\ReferralCode, App\Models\UserReferral;
 
-use App\Models\{ OrderPayment, Order, Post, UserSubscriptionPayment, PostPayment, UserTip, VideoCallPayment, AudioCallPayment, ChatAssetPayment, LiveVideoPayment, UserWalletPayment, PromoCode };
+use App\Models\{ OrderPayment, Order, Post, UserSubscriptionPayment, PostPayment, UserTip, VideoCallPayment, AudioCallPayment, ChatAssetPayment, LiveVideoPayment, UserWalletPayment, PromoCode, UserPromoCode };
 
 use App\Models\{ LiveVideo, Follower };
 
@@ -1723,8 +1723,10 @@ class Helper {
 
             $check_promo_code = CommonRepo::check_promo_code_applicable_to_user($user_details,$promo_code, $service_provider_id)->getData();
 
-
-            throw_if(!$check_promo_code->success, new Exception($check_promo_code->error_messages, $check_promo_code->error_code));
+            if (!$check_promo_code->success) {
+                
+                throw new Exception($check_promo_code->error_messages, $check_promo_code->error_code);
+            }
 
             $promo_amount = promo_calculation($amount,$request, $promo_code, $user_details);
 
@@ -1733,6 +1735,51 @@ class Helper {
         }
 
         return $amount;
+    }
+
+    public static function promo_code_calculation($amount, $request, $promo_code = [], $user_details = []) {
+        if ($request->promo_code && !empty($promo_code) && !empty($user_details)) {
+            $discount = $promo_code->amount_type == PERCENTAGE ? amount_convertion($promo_code->amount, $amount) : $promo_code->amount;
+            $amount = $amount - $discount;
+            
+            $user_promo_code = UserPromoCode::firstOrNew(['user_id' => $request->id, 'promo_code' => $request->promo_code]);
+            $user_promo_code->increment('no_of_times_used');
+            $no_of_times_used = $user_promo_code->no_of_times_used ?? 0;
+            throw_if($promo_code->per_users_limit <= $no_of_times_used, new Exception(api_error(325), 325));
+            $user_promo_code->no_of_times_used = $user_promo_code->exists ? $user_promo_code->no_of_times_used + 1 : 1;
+            $user_promo_code->save();
+        }
+    
+        return $amount;
+    }
+
+    public function get_date_filter_keys($date, $time_convertion, $timezone = DEFAULT_TIMEZONE): array {
+        $format = 'd-m-Y';
+        if($time_convertion) {
+            $date_filter_keys = [
+                $date ? Carbon::createFromFormat($format, Str::substr($date, 0, 10), $timezone)->startOfDay()->setTimeZone('UTC') : null,
+                $date ? Carbon::createFromFormat($format, Str::substr($date, 13, 20), $timezone)->endOfDay()->setTimeZone('UTC') : null
+            ];
+        } else {
+            $date_filter_keys = [
+                $date ? Str::substr($date, 0, 10) : null,
+                $date ? Str::substr($date, 13, 20) : null
+            ];
+        }
+        return $date_filter_keys;
+    }
+
+    public static function filter_with_days($days) {
+        switch ($days) {
+            case LAST_7_DAYS:
+                return now()->subDays(7);
+            case LAST_30_DAYS:
+                return now()->subDays(30);
+            case LAST_90_DAYS:
+                return now()->subDays(90);
+            default:
+                return now()->subDays(7);
+        }
     }
 
 }

@@ -300,6 +300,7 @@ if(!defined('USAGE_TYPE_WITHDRAW')) define('USAGE_TYPE_WITHDRAW', 'withdraw');
 if(!defined('USAGE_TYPE_REFERRAL')) define('USAGE_TYPE_REFERRAL', 'referral');
 
 if(!defined('USAGE_TYPE_CHAT')) define('USAGE_TYPE_CHAT', 'chat');
+if(!defined('USAGE_TYPE_MERMAID')) define('USAGE_TYPE_MERMAID', 'mermaid');
 
 
 
@@ -558,3 +559,7 @@ define('LIVE_STREAM_SHOPPING_ONGOING', 2);
 define('LIVE_STREAM_SHOPPING_COMPLETED', 3);
 
 define('USAGE_TYPE_LIVE_STREAM_SHOPPING', 'live-stream-shopping');
+
+define('LAST_7_DAYS', 7);
+define('LAST_30_DAYS', 30);
+define('LAST_90_DAYS', 90);

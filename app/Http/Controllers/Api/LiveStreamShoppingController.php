@@ -893,7 +893,7 @@ public function ongoing_live_stream_shopping(Request $request)
                         'amount' => $live_stream_shopping_amount * Setting::get('token_amount'),
                         'user_amount' => $live_stream_shopping_amount * Setting::get('token_amount'),
                         'promo_code' => $request->promo_code,
-                        'promo_discount' => $total - $live_stream_shopping,
+                        'promo_discount' => $total - $live_stream_shopping_amount,
                         'status' => PAID,
                     ]);
 

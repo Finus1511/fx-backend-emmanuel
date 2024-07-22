@@ -57,3 +57,6 @@ define('PERSONALIZE_FILE_PATH', 'uploads/personalize_file/');
 
 define('LIVE_STREAM_SHOPPING_FILE_PATH', 'uploads/live_stream_shopping/');
 
+define('MERMAID_FILE_PATH', 'uploads/mermaids/');
+
+define('MERMAID_FOLDER_PATH', 'uploads/mermaid_folders/');

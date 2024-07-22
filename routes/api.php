@@ -694,9 +694,13 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('promo_code_index', 'Api\PromocodeApiController@promo_code_index');
 
+        Route::post('promo_code_validate', 'Api\PromocodeApiController@promo_code_validate');
+
         Route::post('promo_code_save', 'Api\PromocodeApiController@promo_code_save');
 
         Route::post('promo_code_delete', 'Api\PromocodeApiController@promo_code_delete');
+
+        Route::post('promo_code_status_update', 'Api\PromocodeApiController@promo_code_status_update');
 
         Route::post('login_session_index', 'Api\UserAccountApiController@login_session_index');
 
@@ -888,6 +892,18 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
                 Route::post('lss_update_viewer_count', 'lss_update_viewer_count');
 
             });
+        });
+    });
+
+    Route::controller(Api\MermaidController::class)->group(function() {
+        Route::group(['prefix' => 'mermaids'], function() {
+            Route::post('', 'index');
+            Route::post('store', 'store');
+            Route::post('destroy', 'destroy');
+            Route::post('files_upload', 'files_upload');
+            Route::post('files_remove', 'files_remove');
+            Route::post('view', 'view');
+            Route::post('mermaids_payment_by_wallet', 'mermaids_payment_by_wallet');
         });
     });
 

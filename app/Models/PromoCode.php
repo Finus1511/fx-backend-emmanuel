@@ -10,6 +10,8 @@ class PromoCode extends Model
 
     protected $hidden = ['id', 'unique_id'];
 
+    protected $guarded = ['id'];
+
     public function getPromoCodeIdAttribute() {
 
         return $this->id;

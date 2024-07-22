@@ -14,4 +14,5 @@ composer.lock
 .gitignore.save
 package-lock.json
 composer.lock
-
+/public/vendor/telescope
+/public/storage

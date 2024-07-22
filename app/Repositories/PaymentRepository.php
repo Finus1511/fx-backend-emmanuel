@@ -3429,4 +3429,50 @@ class PaymentRepository {
 
     }
 
+    public static function mermaid_payment_wallet_update($request, $mermaid, $mermaid_payment) {
+
+        try {
+
+            $to_user_inputs = [
+                'id' => $mermaid->user_id,
+                'received_from_user_id' => $mermaid_payment->user_id,
+                'total' => $mermaid_payment->paid_amount ?? 0.00, 
+                'user_pay_amount' => $mermaid_payment->user_amount ?? 0.00,
+                'paid_amount' => $mermaid_payment->user_amount ?? 0.00,
+                'payment_type' => WALLET_PAYMENT_TYPE_CREDIT,
+                'amount_type' => WALLET_AMOUNT_TYPE_ADD,
+                'payment_id' => $mermaid_payment->payment_id,
+                'admin_amount' => $mermaid_payment->admin_amount ?? 0.00,
+                'user_amount' => $mermaid_payment->user_amount ?? 0.00,
+                'usage_type' => USAGE_TYPE_PPV,
+                'user_token' => $mermaid_payment->amount ?? 0.00,
+                'admin_token' => $mermaid_payment->admin_amount ?? 0.00,
+                'tokens' => $mermaid_payment->user_amount ?? 0.00, 
+            ];
+
+            $to_user_request = new Request($to_user_inputs);
+
+            $to_user_payment_response = self::user_wallets_payment_save($to_user_request)->getData();
+
+            if($to_user_payment_response->success) {
+
+                DB::commit();
+
+                return $to_user_payment_response;
+
+            } else {
+
+                throw new Exception($to_user_payment_response->error, $to_user_payment_response->error_code);
+            }
+        
+        } catch(Exception $e) {
+
+            $response = ['success' => false, 'error' => $e->getMessage(), 'error_code' => $e->getCode()];
+
+            return response()->json($response, 200);
+
+        }
+
+    }
+
 }

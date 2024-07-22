@@ -6,7 +6,7 @@ use Carbon\Carbon;
 
 use App\Models\{User, PageCounter, Settings, VirtualExperienceBooking, VirtualExperience, OrderProduct, OrderPayment, LssProductPayment, LiveStreamShopping};
 
-use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode};
+use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Mermaid, MermaidPayment};
 
 use App\Repositories\CommonRepository as CommonRepo;
 
@@ -1881,4 +1881,12 @@ function platform_formatted($platform) {
     ];
 
     return isset($platform_list[$platform]) ? $platform_list[$platform] : tr('na');
+}
+
+function mermaid_post_user_needs_to_pay($mermaid_id, $user_id) {
+    $is_user_needs_to_pay = NO;
+    $mermaid = Mermaid::firstWhere(['id' => $mermaid_id, 'user_id' => $user_id]);
+    $is_payment_done = MermaidPayment::where(['mermaid_id' => $mermaid_id, 'user_id' => $user_id, 'status' => PAID])->count();
+    $is_user_needs_to_pay  = !$is_payment_done && !$mermaid ? YES : NO; 
+    return $is_user_needs_to_pay;
 }

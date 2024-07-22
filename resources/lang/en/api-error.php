@@ -415,4 +415,26 @@ return [
 
     319 => ":other_key is not valid for this transaction, please try with another coupon code.",
 
+    320 => "Promo Code expired..!, You can`t use the Promo Code.",
+ 
+    321 => "Promo Code Limit Reached..!, You can`t use the Promo Code.",
+ 
+    322 => "Promo Code is not applicable for your account..!, You can`t use the Promo Code.",
+ 
+    323 => "Your maxiumum limit is over..!",
+ 
+    324 => "Promo Code is inactive..!, You can`t use the Promo Code.",
+
+    325 => "Your maxiumum limit is over..!",
+
+    326 => "Promo code details updating failed..!",
+
+    327 => "Mermaid details save failed..!",
+
+    327 => "Mermaid details was not found.!",
+
+    328 => "Mermaid post payment has already done.!",
+
+    329 => "The mermaid post payment wallet update failed.!"
+
 ];
