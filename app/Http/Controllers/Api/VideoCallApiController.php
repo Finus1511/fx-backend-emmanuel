@@ -887,7 +887,7 @@ class VideoCallApiController extends Controller
 
             $rules = [
                     'video_call_request_id' => 'required|exists:video_call_requests,id,user_id,'.$request->id,
-                    'promo_codes' => 'nullable|exists:promo_codes,promo_code',
+                    'promo_code' => 'nullable|exists:promo_codes,promo_code',
                 ];
 
             $custom_errors = ['video_call_request_id' => api_error(214)];

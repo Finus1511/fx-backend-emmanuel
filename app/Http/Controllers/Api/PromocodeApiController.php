@@ -55,12 +55,6 @@ class PromocodeApiController extends Controller
 
         try {
 
-            $date_filter = '';
-            if($request->from_date) {
-                $date_filter .= $request->from_date;
-                $date_filter .= $request->to_date ? " - $request->to_date" : (" - " . now($this->user_timezone)->format('d-m-Y'));
-            }
-
             $base_query = PromoCode::query()->where('user_id', $request->id)
             ->when($request->filled('search_key'), function($query) use($request) {
                 $query->where(function($query) use($request){
@@ -71,19 +65,19 @@ class PromocodeApiController extends Controller
                 $query->where(function($query) use($request){
                     $query->where('amount_type', $request->amount_type);
                 });
-            })->when($request->filled('sort_by_days'), function ($query) use ($request) {
+            })->when($request->filled('status'), function($query) use($request) {
                 $query->where(function($query) use($request){
-                    $query->where('created_at', '>=', (new Helper)->filter_with_days($request->sort_by_days));
+                    $query->where('status', $request->status);
                 });
-            })->when($date_filter, function($query) use($date_filter) {
-                $query->where(function($query) use($date_filter) {
-                    $query->whereBetween('created_at', (new Helper)->get_date_filter_keys($date_filter, true, $this->user_timezone));
+            })->when($request->filled('sort_by') && $request->sort_by == EXPIRY, function ($query) use ($request) {
+                $query->where(function($query) use($request){
+                    $query->where('expiry_date', '<=', now());
                 });
             });
 
             $data['total'] = $base_query->count() ?? 0;
 
-            $promocode = $base_query->skip($this->skip)->take($this->take)->latest()->get();
+            $promocode = $base_query->skip($this->skip)->take($this->take)->get();
 
             $data['promocode'] = PromoCodeResource::collection($promocode);
 
@@ -120,7 +114,17 @@ class PromocodeApiController extends Controller
 
             throw_if(!$user, new Exception(api_error(135), 135));
 
-            $promo_code = PromoCode::updateOrCreate(['id' => $request->promo_code_id, 'user_id' => $request->id], $request->validated());
+            $start_date = $request->start_date ? common_server_date($request->start_date, $this->timezone, 'Y-m-d H:i:s') : now();
+
+            $expiry_date = $request->expiry_date ? common_server_date($request->expiry_date, $this->timezone, 'Y-m-d H:i:s') : null;
+
+            $validated_data = $request->validated();
+
+            $validated_data['start_date'] = $start_date;
+
+            $validated_data['expiry_date'] = $expiry_date;
+
+            $promo_code = PromoCode::updateOrCreate(['id' => $request->promo_code_id, 'user_id' => $request->id], $validated_data);
 
             throw_if(!$promo_code, new Exception(api_error(326), 326));
 
@@ -195,11 +199,16 @@ class PromocodeApiController extends Controller
         try {
 
         DB::beginTransaction();
-        
-        $promo_code = PromoCode::firstWhere(['promo_code' => $request->promo_code]);
 
-        throw_if(!$promo_code || ($promo_code->platform != $request->platform && $promo_code->platform != ALL_PAYMENTS), new Exception(api_error(291), 291));
+        $coupon_applied_amount = 0;
         
+        $promo_code = PromoCode::where('promo_code', $request->promo_code)->where(function($query) use ($request) {
+                $query->where('platform', $request->platform)
+                    ->orWhere('platform', ALL_PAYMENTS);
+        })->first();
+
+        throw_if(!$promo_code, new Exception(api_error(291), 291));
+
         $user = User::find($request->id);
 
         throw_if(!$user, new Exception(api_error(135), 135));
@@ -216,14 +225,15 @@ class PromocodeApiController extends Controller
 
         throw_if($request->id == $promo_code->user_id, new Exception(api_error(322), 322));
 
-        $promo_amount = $request_amount = (new PromoCodeService)->handle($request->platform, $request)->getData()->data ?? 0.00;
+        $request_amount = (new PromoCodeService)->handle($request->platform, $request)->getData()->data ?? 0.00;
 
-        if ($request->promo_code && !empty($promo_code)) {
-            $discount = $promo_code->amount_type == PERCENTAGE ? amount_convertion($promo_code->amount, $promo_amount) : $promo_code->amount;
-            $promo_amount = $promo_amount - $discount;
-        }
+        throw_if($request_amount == 0, new Exception(api_error(334), 334));
 
-        $coupon_applied_amount = $request_amount - $promo_amount;
+        if($request->promo_code && !empty($promo_code) && !empty($user)) {
+            $discount = $promo_code->amount_type == PERCENTAGE ? amount_convertion($promo_code->amount, $request_amount) : $promo_code->amount;
+
+            $coupon_applied_amount = $request_amount - $discount;
+        } 
         
         $data['coupon_code_validate'] = [
             'request_amount' => $request_amount,
@@ -231,7 +241,8 @@ class PromocodeApiController extends Controller
             'coupon_type' => $promo_code->amount_type ? tr('amount') : tr('percentage'),
             'coupon_code_amount' => $promo_code->amount_type == ABSOULTE ? $promo_code->amount : 0.00,
             'coupon_code_percentage' => $promo_code->amount_type != ABSOULTE ? $promo_code->amount . '%' : null,
-            'coupon_applied_amount' => $coupon_applied_amount,
+            'coupon_applied_amount' => $discount ?: 0,
+            'coupon_code_discount_amount' => $coupon_applied_amount ?? 0,
         ];
         
         DB::commit();
@@ -247,14 +258,44 @@ class PromocodeApiController extends Controller
     public function promo_code_status_update(PromoCodeGetRequest $request) {
         try {
             DB::beginTransaction();
+
             $promo_code = PromoCode::firstWhere(['unique_id' => $request->promo_code_unique_id, 'user_id' => $request->id]);
+
             $promo_code->update(['status' => !$promo_code->status]);
-            $success_code = $promo_code->status ? 841 : 842;
+
             DB::commit();
+
+            $status_code = $promo_code->status == APPROVED ? 842 : 843;
+
             $data['promo_code'] = new PromoCodeResource($promo_code->refresh());
-            return $this->sendResponse(api_success($success_code), $success_code, $data);
+
+            return $this->sendResponse(api_success($status_code), $status_code, $data);
         } catch(Exception $e) {
             DB::rollBack();
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+    }
+
+         /**
+     * @method view()
+     *
+     * @uses To view promocodes using unique id
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param object $request
+     *
+     * @return  JSON Response
+     */
+    public function promo_code_view(PromoCodeGetRequest $request) {
+        try {
+            $promo_code = PromoCode::firstWhere(['unique_id' => $request->promo_code_unique_id]);
+            throw_if(!$promo_code, new Exception(api_error(291), 291));
+            $data['promo_code'] = new PromoCodeResource($promo_code);
+            return $this->sendResponse('', '', $data);
+        } catch(Exception $e) {
             return $this->sendError($e->getMessage(), $e->getCode());
         }
     }

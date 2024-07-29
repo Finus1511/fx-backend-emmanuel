@@ -12,7 +12,7 @@ use App\Jobs\FollowUserJob;
 
 use DB, Log, Hash, Validator, Exception, Setting;
 
-use App\Models\User, App\Models\Follower;
+use App\Models\{User, Follower, ChatMessagePayment};
 
 class FollowersApiController extends Controller
 {
@@ -438,6 +438,14 @@ class FollowersApiController extends Controller
                     ->first();
 
                 $chat_user->message = $chat_messages->message ?? '....';
+
+                $to_user = User::firstWhere(['id' => $chat_user->to_user_id, 'is_content_creator' => CONTENT_CREATOR]);
+
+                $chat_message_payment = ChatMessagePayment::where(['user_id' => $request->id, 'to_user_id' => $chat_user->to_user_id,'status' => PAID])->latest()->first();
+
+                $current_date = now();
+
+                $chat_user->is_user_needs_pay = $to_user ? ($chat_message_payment && $chat_message_payment->expiry_date && !$current_date->isAfter($chat_message_payment->expiry_date && $to_user->chat_message_amount == 0) ? NO : YES) :  NO;
 
                 $chat_user->file_type = $chat_messages->file_type ?? FILE_TYPE_TEXT;  
 

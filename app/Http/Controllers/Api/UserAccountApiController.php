@@ -14,7 +14,7 @@ use App\Models\User, App\Models\PostPayment, App\Models\Follower, App\Models\Use
 
 use App\Models\Post, App\Models\PostFile, App\Models\PromoCode, App\Models\VideoCallPayment, App\Models\AudioCallPayment;
 
-use App\Models\{CategoryDetail, UserSubscriptionPayment, PostLike, UserWallet, UserTip, UserLoginSession, LiveStreamShopping, LssPayment, LssProductPayment, LssProduct};
+use App\Models\{CategoryDetail, UserSubscriptionPayment, PostLike, UserWallet, UserTip, UserLoginSession, LiveStreamShopping, LssPayment, LssProductPayment, LssProduct, ChatMessagePayment};
 
 use App\Models\ChatAssetPayment, App\Models\Category, App\Models\LiveVideo;
 
@@ -1397,15 +1397,21 @@ class UserAccountApiController extends Controller
 
               $user->audio_call_token = $request->audio_call_amount ?? 0;
 
+              $user->chat_message_token = $request->chat_message_amount ?? 0;
+
               $user->video_call_amount = $user->video_call_token * Setting::get('token_amount');
 
               $user->audio_call_amount = $user->audio_call_token * Setting::get('token_amount');
+
+              $user->chat_message_amount = $user->chat_message_token * Setting::get('token_amount');
 
             } else {
 
               $user->video_call_amount = $request->video_call_amount ?? ($user->video_call_amount ?: 0.00);
 
               $user->audio_call_amount = $request->audio_call_amount ?? ($user->audio_call_amount ?: 0.00);
+
+              $user->chat_message_amount = $request->chat_message_amount ?? ($user->chat_message_amount ?: 0.00);
 
             }
 
@@ -3366,6 +3372,13 @@ class UserAccountApiController extends Controller
 
             DB::beginTransaction();
 
+            $chat_message_payment = ChatMessagePayment::where(['user_id' => $request->from_user_id, 'to_user_id' => $request->to_user_id, 'status' => PAID])->latest()->first();
+            
+            if($chat_message_payment){
+                $current_date = now();
+                throw_if($chat_message_payment->expiry_date && $current_date->isAfter($chat_message_payment->expiry_date), new Exception(api_error(333), 333));
+            }
+
             $chat_user = \App\Models\ChatUser::where('from_user_id', $request->from_user_id)->where('to_user_id', $request->to_user_id)->first();
 
             if($chat_user) {
@@ -3381,6 +3394,10 @@ class UserAccountApiController extends Controller
                 
                 $chat_user->save();
             }
+
+            $to_user = User::firstWhere(['id' => $request->to_user_id, 'is_content_creator' => CONTENT_CREATOR]);
+
+            $chat_user['is_user_needs_pay'] = $to_user ? ($chat_message_payment || $to_user->chat_message_amount == 0 ? NO : YES) : NO;
 
             DB::commit();
 

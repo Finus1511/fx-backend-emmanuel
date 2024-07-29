@@ -347,6 +347,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('chat_messages_index','Api\ChatApiController@chat_messages_index');
 
+        Route::post('chat_message_payment_by_wallet', 'Api\ChatApiController@chat_message_payment_by_wallet');
+
         Route::post('chat_messages_save','Api\ChatApiController@chat_messages_save');
 
         Route::post('chat_assets', 'Api\ChatApiController@chat_assets_index');
@@ -702,6 +704,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('promo_code_status_update', 'Api\PromocodeApiController@promo_code_status_update');
 
+        Route::post('promo_code_view', 'Api\PromocodeApiController@promo_code_view');
+
         Route::post('login_session_index', 'Api\UserAccountApiController@login_session_index');
 
         Route::post('two_step_auth_update', 'Api\UserAccountApiController@two_step_auth_update');
@@ -896,7 +900,7 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
     });
 
     Route::controller(Api\MermaidController::class)->group(function() {
-        Route::group(['prefix' => 'mermaids'], function() {
+        Route::group(['prefix' => 'collections'], function() {
             Route::post('', 'index');
             Route::post('store', 'store');
             Route::post('destroy', 'destroy');

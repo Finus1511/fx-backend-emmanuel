@@ -2113,4 +2113,5 @@ return [
 	"live_stream_products_search_placeholder" => "Search by User, Name",
 	"live_stream_shopping_payments" => "Live stream shopping payments",
 	"live_stream_shopping_product_payments" => "Live stream shopping product payments",
+	"promo_code_applied_success" => "Promo code applied successfully.!",
 ];

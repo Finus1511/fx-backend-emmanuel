@@ -1999,13 +1999,13 @@ class PostsApiController extends Controller
 
             $base_query = $total_query = \App\Models\FavUser::where('user_id', $request->id)->Approved()->orderBy('fav_users.created_at', 'desc')->whereHas('favUser');
 
+            $data['total'] = $total_query->count() ?? 0;
+
             $fav_users = $base_query->skip($this->skip)->take($this->take)->get();
 
             $fav_users = \App\Repositories\CommonRepository::favorites_list_response($fav_users, $request);
 
             $data['fav_users'] = $fav_users ?? [];
-
-            $data['total'] = $total_query->count() ?? 0;
 
             return $this->sendResponse($message = '' , $code = '', $data);
         

@@ -246,7 +246,7 @@ class MermaidController extends Controller
                 }
                 DB::commit();
                 $data['mermaid_payment'] = new MermaidPaymentResource($mermaid_payment->refresh());
-                return $this->sendResponse(api_success(840), 840, $data);
+                return $this->sendResponse(api_success(841), 841, $data);
             } else {
                 throw new Exception($wallet_payment_response->error, $wallet_payment_response->error_code);
             }

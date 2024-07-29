@@ -10,9 +10,11 @@ use Log, Validator, Exception, DB, Setting;
 
 use App\Helpers\Helper;
 
-use App\Http\Resources\ChatMessageResource;
+use App\Http\Resources\{ChatMessageResource, ChatMessagePaymentResource};
 
-use App\Models\{Follower, ChatMessage, ChatAsset};
+use App\Http\Requests\Api\ChatMessagePaymentRequest;
+
+use App\Models\{Follower, ChatMessage, ChatAsset, User, UserWallet, ChatMessagePayment};
 
 use App\Repositories\PaymentRepository as PaymentRepo;
 
@@ -821,10 +823,8 @@ class ChatApiController extends Controller
 
                 $recieving_users = \App\Models\User::where('user_type', $request->user_type)->pluck('id')->toArray(); //users of the selected type
 
-            }else{
-
+            }else{    
                 $recieving_users = \App\Models\Follower::where('follower_id', $request->from_user_id)->pluck('user_id')->toArray(); //following users
-
             }
 
             $data = $file_data = [];
@@ -1273,6 +1273,13 @@ class ChatApiController extends Controller
 
             $to_chat_user = \App\Models\ChatUser::updateOrCreate($to_chat_user_inputs);
 
+            $chat_message_payment = ChatMessagePayment::where(['user_id' => $request->from_user_id, 'to_user_id' => $request->to_user_id, 'status' => PAID])->latest()->first();
+            
+            if($chat_message_payment){
+              $current_date = now();
+              throw_if($chat_message_payment->expiry_date && $current_date->isAfter($chat_message_payment->expiry_date), new Exception(api_error(333), 333));
+            }
+
             $chat_message = new \App\Models\ChatMessage;
 
             $chat_message->from_user_id = $request->from_user_id;
@@ -1383,6 +1390,10 @@ class ChatApiController extends Controller
             }
 
             $chat_message = \App\Repositories\CommonRepository::chat_messages_asset_single_response($chat_message, $request);
+
+            $to_user = User::firstWhere(['id' => $request->to_user_id, 'is_content_creator' => CONTENT_CREATOR]);
+
+            $chat_message->is_user_needs_pay = $to_user ? ($chat_message_payment || $to_user->chat_message_amount == 0 ? NO : YES) : NO;
 
             $data['chat_message'] = $chat_message ?? emptyObject();
 
@@ -1563,6 +1574,88 @@ class ChatApiController extends Controller
 
             DB::rollback();
 
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * @method chat_message_payment_by_wallet()
+     *
+     * @uses Send money to other user
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param object $request
+     *
+     * @return JSON response
+     */
+    public function chat_message_payment_by_wallet(ChatMessagePaymentRequest $request) {
+        try {
+            DB::beginTransaction();
+            $to_user = User::firstWhere(['id' => $request->to_user_id, 'is_content_creator' => CONTENT_CREATOR]);
+            throw_if(!$to_user, new Exception(api_error(289), 289));
+            $total = Setting::get('is_only_wallet_payment') ? $to_user->chat_message_token : $to_user->chat_message_amount;
+            $user_pay_amount = $request->promo_code ? Helper::apply_promo_code($request, $total, CHAT_MESSAGE_PAYMENTS, $to_user->id) : $total;
+            throw_if($to_user->id == $request->id, new Exception(api_error(332), 332));
+            $chat_message_payment = ChatMessagePayment::where(['user_id' => $request->id])->latest()->first();
+
+            $current_date = now();
+
+            if($chat_message_payment){
+                
+               throw_if(!$current_date->isAfter($chat_message_payment->expiry_date), new Exception(api_error(335), 335));
+            }
+            if($user_pay_amount > 0) {
+                $user_wallet = UserWallet::where('user_id', $request->id)->first();
+                throw_if(!$user_wallet, new Exception(api_error(282), 282));
+                $remaining = $user_wallet->remaining ?? 0;
+                if(Setting::get('is_referral_enabled')) {
+                    $remaining = $remaining + $user_wallet->referral_amount;
+                }
+               throw_if($remaining < $total, new Exception(api_error(147), 147));
+                $request->request->add([
+                    'payment_mode' => PAYMENT_MODE_WALLET,
+                    'total' => $user_pay_amount * Setting::get('token_amount'),
+                    'user_pay_amount' => $user_pay_amount,
+                    'paid_amount' => $user_pay_amount * Setting::get('token_amount'),
+                    'payment_type' => WALLET_PAYMENT_TYPE_PAID,
+                    'amount_type' => WALLET_AMOUNT_TYPE_MINUS,
+                    'payment_id' => 'WPP-'.rand(),
+                    'usage_type' => USAGE_TYPE_CHAT_MESSAGE,
+                    'tokens' => $user_pay_amount,
+                    'promo_code'=> $request->promo_code,
+                    'promo_discount' => $request->promo_code ? $total-$user_pay_amount : 0,
+                ]);
+               $wallet_payment_response = PaymentRepo::user_wallets_payment_save($request)->getData();
+            if($wallet_payment_response->success) {
+                $chat_message_payment = ChatMessagePayment::create([
+                    'user_id' => $request->id,
+                    'to_user_id' => $request->to_user_id,
+                    'payment_mode' => PAYMENT_MODE_WALLET,
+                    'payment_id' => $request->payment_id,
+                    'amount' => $user_pay_amount * Setting::get('token_amount'),
+                    'user_amount' => $user_pay_amount * Setting::get('token_amount'),
+                    'paid_date' => now(),
+                    'expiry_date' => now()->addDays(30)->setTimezone('UTC'),
+                    'admin_amount' => $user_pay_amount * Setting::get('token_amount'),
+                    'status' => PAID,
+                ]);
+                if($chat_message_payment->status == PAID) {
+                    $wallet_payment_response = PaymentRepo::chat_message_payment_wallet_update($request, $chat_message_payment);
+                    throw_if(!$wallet_payment_response->success ?? "", new Exception(api_error(329), 329)); 
+                }
+                DB::commit();
+                $data['chat_message_payment'] = new ChatMessagePaymentResource($chat_message_payment->refresh());
+                return $this->sendResponse(api_success(844), 844, $chat_message_payment);
+            } else {
+                throw new Exception($wallet_payment_response->error, $wallet_payment_response->error_code);
+            }
+        }
+        return $this->sendError(api_error(303), 303, '');
+        } catch(Exception $e) {
+            DB::rollback();
             return $this->sendError($e->getMessage(), $e->getCode());
         }
     }

@@ -10,7 +10,7 @@ use App\Helpers\Helper;
 
 use DB, Log, Hash, Validator, Exception, Setting;
 
-use App\Models\User, App\Models\Story, App\Models\StoryFile;
+use App\Models\{User, Story, StoryFile, FavUser};
 
 use Carbon\Carbon;
 
@@ -538,8 +538,12 @@ class StoriesApiController extends Controller
 
             $blocked_users = blocked_users($request->id);
 
-            $user_ids = Story::Approved()->whereNotIn('stories.user_id',$blocked_users)->whereIn('stories.user_id', $follower_ids)->where('publish_time', '>=', 
-                    Carbon::now()->subDay())->groupBy('user_id')->pluck('user_id');
+            $fav_user_ids = FavUser::where(['user_id' => $request->id, 'status' => APPROVED])->pluck('fav_user_id')->toArray();
+
+            $user_ids = Story::Approved()->whereNotIn('stories.user_id', $blocked_users)->where(function ($query) use ($follower_ids, $fav_user_ids) {
+                 $query->whereIn('stories.user_id', $follower_ids)
+                  ->orWhereIn('stories.user_id', $fav_user_ids);
+            })->where('publish_time', '>=', Carbon::now()->subDay())->groupBy('user_id')->pluck('user_id');
 
             $base_query = $total_query = User::CommonResponse()->whereIn('id', $user_ids);
 
@@ -560,8 +564,7 @@ class StoriesApiController extends Controller
             return $this->sendError($e->getMessage(), $e->getCode());
         
         }
-    
-    }
+     }
 
      /**
      * @method stories_single_view()

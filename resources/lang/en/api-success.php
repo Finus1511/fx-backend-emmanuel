@@ -334,8 +334,12 @@ return [
 
     840 => "The Mermaid details was deleted successfully.!",
 
-    841 => "The promo code is activated.",
+    841 => "The Mermaid post payment done.!",
 
-    842 => "The promo code is deactivated."
+    842 => "The promo code is activated.",
+
+    843 => "The promo code is deactivated.",
+
+    844 => "The chat message payment was done.!"
 
 ];

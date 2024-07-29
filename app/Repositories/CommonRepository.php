@@ -8,9 +8,7 @@ use Log, Validator, Setting, Exception, DB;
 
 use Carbon\Carbon;
 
-use App\Models\User, App\Models\Post, App\Models\UserSubscriptionPayment, App\Models\UserWallet, App\Models\PostLike, App\Models\UserTip, App\Models\PostPayment, App\Models\UserCategory, App\Models\Follower, App\Models\UserPromoCode, App\Models\ChatUser;
-
-use App\Models\UserLoginSession;
+use App\Models\{User, Post, UserSubscriptionPayment, UserWallet,PostLike, UserTip, PostPayment, UserCategory, Follower, UserPromoCode, ChatUser, ChatMessagePayment, UserLoginSession};
 
 use App\Jobs\ReportJob;
 
@@ -41,53 +39,21 @@ class CommonRepository {
 
             $currentDate = date('Y-m-d H:i:s');
 
-            if ($currentDate < $promo_code->start_date) {
+            throw_if($currentDate < $promo_code->start_date, new Exception(tr('promo_code_not_started'), 101));
 
-                throw new Exception(tr('promo_code_not_started'), 101);
+            throw_if($currentDate > $promo_code->expiry_date && $promo_code->expiry_date != NULL, new Exception(tr('promo_code_expired'), 101));
 
-            }
+            throw_if($no_of_times_used >= $promo_code->no_of_users_limit, new Exception(tr('total_no_of_users_maximum_limit_reached'), 101));
 
-            if ($currentDate > $promo_code->expiry_date && $promo_code->expiry_date != NULL) {
-
-                throw new Exception(tr('promo_code_expired'), 101);
-
-            }
-
-            if ($no_of_times_used >= $promo_code->no_of_users_limit) {
-
-                throw new Exception(tr('total_no_of_users_maximum_limit_reached'), 101);
-
-            }
-
-            if ($promo_code->user_id != 0 && $service_provider_id != $promo_code->user_id) {
-
-                throw new Exception(tr('promo_code_not_applicable_for_you'), 101);
-
-            }
+            throw_if($promo_code->user_id != 0 && $service_provider_id != $promo_code->user_id, new Exception(tr('promo_code_not_applicable_for_you'), 101));
 
             $user_promo_code = UserPromoCode::where('user_id', $user->id)->where('promo_code', $promo_code->promo_code)->first();
 
-            // If user promo_code not exists, create a new row
+            throw_if($promo_code->per_users_limit <= $no_of_times_used, new Exception(api_error(325), 325));
 
-            if (!$user_promo_code) {
+            $response = ['success' => true, 'message' => tr('promo_code_applied_success'), 'code'=>2002];
 
-                $response_array = ['success' => true, 'message' => tr('create_a_new_coupon_row'), 'code' => 2001];
-
-                return response()->json($response_array);
-
-            }
-
-            if ($user_promo_code->no_of_times_used < $promo_code->per_users_limit) {
-
-                $response_array = ['success' => true, 'message' => tr('add_no_of_times_used_coupon'), 'code'=>2002];
-
-            } else {
-
-                throw new Exception(tr('per_users_limit_exceed'), 101);
-            }
-
-
-            return response()->json($response_array);
+            return response()->json($response, 200);
 
         } catch (Exception $e) {
 
@@ -280,6 +246,10 @@ class CommonRepository {
 
         // Check the user already following
         $follower = \App\Models\Follower::where('status', YES)->where('follower_id', $request->id)->where('user_id', $other_user->user_id)->first();
+
+        $chat_message_payment = ChatMessagePayment::firstWhere(['user_id' => $request->id, 'to_user_id' => $other_user->user_id]);
+        $current_date = now();
+        $data['user_needs_pay_chat_message'] = $chat_message_payment && !$current_date->isAfter($chat_message_payment->expiry_date) ? NO : YES;
 
         if(!$follower) {
 

@@ -301,7 +301,7 @@ if(!defined('USAGE_TYPE_REFERRAL')) define('USAGE_TYPE_REFERRAL', 'referral');
 
 if(!defined('USAGE_TYPE_CHAT')) define('USAGE_TYPE_CHAT', 'chat');
 if(!defined('USAGE_TYPE_MERMAID')) define('USAGE_TYPE_MERMAID', 'mermaid');
-
+if(!defined('USAGE_TYPE_CHAT_MESSAGE')) define('USAGE_TYPE_CHAT_MESSAGE', 'chat-message');
 
 
 if(!defined('SORT_BY_HIGH')) define('SORT_BY_HIGH',1);
@@ -462,12 +462,13 @@ if(!defined('POST_PAYMENTS')) define('POST_PAYMENTS', 'post-payments');
 if(!defined('VIDEO_CALL_PAYMENTS')) define('VIDEO_CALL_PAYMENTS', 'video-call-payments');
 if(!defined('AUDIO_CALL_PAYMENTS')) define('AUDIO_CALL_PAYMENTS', 'audio-call-payments');
 if(!defined('CHAT_ASSET_PAYMENTS')) define('CHAT_ASSET_PAYMENTS', 'chat-asset-payments');
+if(!defined('CHAT_MESSAGE_PAYMENTS')) define('CHAT_MESSAGE_PAYMENTS', 'chat-message-payments');
 if(!defined('ORDER_PAYMENTS')) define('ORDER_PAYMENTS', 'order-payments');
 if(!defined('LIVE_VIDEO_PAYMENTS')) define('LIVE_VIDEO_PAYMENTS', 'live-video-payments');
 if(!defined('TOTAL_PAYMENTS')) define('TOTAL_PAYMENTS', 'total-payments');
 if(!defined('ALL_PAYMENTS')) define('ALL_PAYMENTS', 'all-payments');
 
-if(!defined('PLATFORMS')) define('PLATFORMS', implode(',', [SUBSCRIPTION_PAYMENTS,USER_TIPS,POST_PAYMENTS,VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS,CHAT_ASSET_PAYMENTS,ORDER_PAYMENTS,LIVE_VIDEO_PAYMENTS,ALL_PAYMENTS]));
+if(!defined('PLATFORMS')) define('PLATFORMS', implode(',', [SUBSCRIPTION_PAYMENTS,USER_TIPS,POST_PAYMENTS,VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS,CHAT_ASSET_PAYMENTS,ORDER_PAYMENTS,LIVE_VIDEO_PAYMENTS,CHAT_MESSAGE_PAYMENTS, ALL_PAYMENTS]));
 
 if(!defined('ACTIVE')) define('ACTIVE', 1);
 if(!defined('INACTIVE')) define('INACTIVE', 0);
@@ -563,3 +564,5 @@ define('USAGE_TYPE_LIVE_STREAM_SHOPPING', 'live-stream-shopping');
 define('LAST_7_DAYS', 7);
 define('LAST_30_DAYS', 30);
 define('LAST_90_DAYS', 90);
+
+define('EXPIRY', 'expiry');

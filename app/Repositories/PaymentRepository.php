@@ -3475,4 +3475,53 @@ class PaymentRepository {
 
     }
 
+    /**
+     * @method chat_message_payment_wallet_update
+     *
+     * @uses chat message payment will update to the model wallet
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param
+     *
+     * @return
+     */
+    public static function chat_message_payment_wallet_update($request, $chat_message_payment) {
+        try {
+            $to_user_inputs = [
+                'id' => $request->id,
+                'to_user_id' => $request->to_user_id,
+                'received_from_user_id' => $request->id,
+                'total' => $chat_message_payment->amount, 
+                'user_pay_amount' => $chat_message_payment->user_amount,
+                'paid_amount' => $chat_message_payment->user_amount,
+                'payment_type' => WALLET_PAYMENT_TYPE_CREDIT,
+                'amount_type' => WALLET_AMOUNT_TYPE_ADD,
+                'payment_id' => $chat_message_payment->payment_id,
+                'user_amount' => $chat_message_payment->user_amount,
+                'admin_amount' => $chat_message_payment->admin_amount,
+                'message' => $request->message,
+                'user_token' => $chat_message_payment->user_token,
+                'admin_token' => $chat_message_payment->admin_token,
+                'tokens' => $chat_message_payment->user_token, 
+                'usage_type' => USAGE_TYPE_CHAT_MESSAGE
+            ];
+            $to_user_request = new \Illuminate\Http\Request();
+            $to_user_request->replace($to_user_inputs);
+            $to_user_payment_response = self::user_wallets_payment_save($to_user_request)->getData();
+            if($to_user_payment_response->success) {
+                DB::commit();
+                return $to_user_payment_response;
+            } else {
+                throw new Exception($to_user_payment_response->error, $to_user_payment_response->error_code);
+            }
+        
+        } catch(Exception $e) {
+            $response = ['success' => false, 'error' => $e->getMessage(), 'error_code' => $e->getCode()];
+            return response()->json($response, 200);
+        }
+    }
+
 }

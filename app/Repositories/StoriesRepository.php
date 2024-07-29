@@ -6,7 +6,7 @@ use App\Helpers\Helper;
 
 use Log, Validator, Setting, Exception, DB;
 
-use App\Models\User;
+use App\Models\{User, FavUser};
 
 use App\Models\Story, App\Models\StoryFile;
 
@@ -38,8 +38,13 @@ class StoriesRepository {
 
         $users = $users->map(function ($user, $key) use ($request, $blocked_users, $follower_ids) {
 
+            $fav_user_ids = FavUser::where(['user_id' => $request->id, 'status' => APPROVED])->pluck('fav_user_id')->toArray();
+
             $story_ids = Story::Approved()->whereNotIn('stories.user_id',$blocked_users)
-                ->whereIn('stories.user_id', $follower_ids)
+                ->where(function ($query) use ($follower_ids, $fav_user_ids) {
+                     $query->whereIn('stories.user_id', $follower_ids)
+                      ->orWhereIn('stories.user_id', $fav_user_ids);
+                })
                 ->where('publish_time', '>=', Carbon::now()->subDay())
                 ->where('user_id',$user->id)->pluck('id');
                         

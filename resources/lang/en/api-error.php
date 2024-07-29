@@ -435,6 +435,15 @@ return [
 
     328 => "Mermaid post payment has already done.!",
 
-    329 => "The mermaid post payment wallet update failed.!"
+    329 => "The mermaid post payment wallet update failed.!",
+
+    330 => "The promo code is already deactivated.!",
+
+    331 => "The Chat message payment has already done.!",
+    332 => "You cannot process a payment to yourself.!",
+    333 => "The chat message subscription has expired. Please pay to continue.",
+    334 => "The request amount must not be zero.",
+
+    335 => "You can pay after the subscription expires.!",
 
 ];
