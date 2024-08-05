@@ -429,13 +429,13 @@ return [
 
     326 => "Promo code details updating failed..!",
 
-    327 => "Mermaid details save failed..!",
+    327 => "Collection details save failed..!",
 
-    327 => "Mermaid details was not found.!",
+    327 => "Collection details was not found.!",
 
-    328 => "Mermaid post payment has already done.!",
+    328 => "Collection post payment has already done.!",
 
-    329 => "The mermaid post payment wallet update failed.!",
+    329 => "The Collection post payment wallet update failed.!",
 
     330 => "The promo code is already deactivated.!",
 

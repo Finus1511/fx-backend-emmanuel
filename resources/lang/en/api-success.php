@@ -326,15 +326,15 @@ return [
 
     836 => "Coupon code applied success!",
 
-    837 => "The Mermaid details was created successfully.!",
+    837 => "The Collection details was created successfully.!",
 
-    838 => "The Mermaid details was updated successfully.!",
+    838 => "The Collection details was updated successfully.!",
 
-    839 => "The Mermaid file was deleted successfully.!",
+    839 => "The Collection file was deleted successfully.!",
 
-    840 => "The Mermaid details was deleted successfully.!",
+    840 => "The Collection details was deleted successfully.!",
 
-    841 => "The Mermaid post payment done.!",
+    841 => "The Collection post payment done.!",
 
     842 => "The promo code is activated.",
 

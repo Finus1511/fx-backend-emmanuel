@@ -491,6 +491,10 @@ Route::group(['middleware' => 'web'], function() {
 
         Route::post('send_bulk_message','Admin\AdminChatController@send_bulk_message')->name('admin_chat_messages.send_bulk_message');
 
+        Route::get('index','Admin\AdminChatController@chat_message_payments_index')->name('chat_message_payments.index');
+
+        Route::get('chat_message_payments/view','Admin\AdminChatController@chat_message_payments_view')->name('chat_message_payments.view');
+
         Route::get('live_videos/payments/view','Admin\AdminLiveVideoController@live_video_payments_view')->name('live_videos.payments.view');
 
         Route::get('video_call_payments','Admin\AdminVideoCallRequestController@video_call_payments')->name('video_call_payments.index');
@@ -660,6 +664,10 @@ Route::group(['middleware' => 'web'], function() {
         Route::get('lss_product_payments', 'Admin\LiveStreamShoppingController@lss_product_payments')->name('live_stream_shoppings.product_payments');
 
         Route::get('lss_products', 'Admin\LiveStreamShoppingController@lss_products')->name('live_stream_shoppings.products');
+
+        Route::get('collections', 'Admin\CollectionController@collections')->name('collections.index');
+        Route::get('collections/view', 'Admin\CollectionController@collections_view')->name('collections.view');
+        Route::get('collection_file/delete', 'Admin\CollectionController@collection_file_delete')->name('collection_file.delete');
 
     });
 

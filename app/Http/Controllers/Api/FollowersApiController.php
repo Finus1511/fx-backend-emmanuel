@@ -422,6 +422,8 @@ class FollowersApiController extends Controller
                     });
             }
 
+            $data['total'] = $total_query->count() ?: 0;
+
             $chat_users = $base_query->skip($this->skip)->take($this->take)
                     ->get();
 

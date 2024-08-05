@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Resources;
-use Illuminate\Http\Resources\Json\JsonResource;
 
-class MermaidFileResource extends JsonResource
+use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\CollectionFileResource;
+
+class CollectionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,16 +16,28 @@ class MermaidFileResource extends JsonResource
     public function toArray($request)
     {
         $timezone = $request->timezone ?? DEFAULT_TIMEZONE;
-        return [
+
+        $data = [
             'id' => $this->id,
+            'user_id' => $this->user_id,
             'unique_id' => $this->unique_id,
-            'file' => $this->file ?: '',
-            'file_type' => $this->file_type ?: '',
-            'preview_file' => $this->preview_file,
+            'name' => $this->name,
+            'thumbnail' => $this->thumbnail ?: asset('images/placeholder.jpeg'),
+            'amount' => $this->amount,
+            'description' => $this->description,
+            'is_paid' => $this->is_paid,
+            'user_needs_to_pay' => collection_post_user_needs_to_pay($this->id, $request->id),
             'status' => $this->status,
             'status_formatted' => $this->status ? tr('approved') : tr('declined'),
             'created_at' => common_date($this->created_at, $timezone),
             'updated_at' => common_date($this->updated_at, $timezone)
         ];
+
+        // if ($data['user_needs_to_pay'] == NO) {
+
+            $data['collection_files_count'] = count($this->collectionFiles);
+        // }
+
+        return $data;
     }
 }

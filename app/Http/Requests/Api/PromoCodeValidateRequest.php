@@ -26,7 +26,7 @@ class PromoCodeValidateRequest extends FormRequest
      */
     public function rules()
     {
-        $types = [SUBSCRIPTION_PAYMENTS, POST_PAYMENTS, VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS, CHAT_ASSET_PAYMENTS, LIVE_VIDEO_PAYMENTS, CHAT_MESSAGE_PAYMENTS];
+        $types = [SUBSCRIPTION_PAYMENTS, POST_PAYMENTS, VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS, CHAT_ASSET_PAYMENTS, LIVE_VIDEO_PAYMENTS, CHAT_MESSAGE_PAYMENTS, COLLECTION_PAYMENTS];
         return [
             'promo_code' => 'required|string',
             'platform' => ['required', Rule::in($types)],
@@ -67,6 +67,10 @@ class PromoCodeValidateRequest extends FormRequest
             });
         } elseif ($this->platform === CHAT_MESSAGE_PAYMENTS) {
             $validator->sometimes('to_user_id', 'required|exists:users,id', function ($input) {
+                return true;
+            });
+        } elseif ($this->platform === COLLECTION_PAYMENTS) {
+            $validator->sometimes('collection_id', 'required|exists:collections,id', function ($input) {
                 return true;
             });
         }

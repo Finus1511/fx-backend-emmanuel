@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddFieldsMermaids extends Migration
+class CreateCollectionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddFieldsMermaids extends Migration
     public function up()
     {
         
-        Schema::create('mermaids', function (Blueprint $table) {
+        Schema::create('collections', function (Blueprint $table) {
             $table->id();
             $table->string('unique_id')->unique();
             $table->foreignId('user_id');
@@ -27,11 +27,11 @@ class AddFieldsMermaids extends Migration
             $table->tinyInteger('status')->default(APPROVED);
             $table->timestamps();
         });
-        Schema::create('mermaid_files', function (Blueprint $table) {
+        Schema::create('collection_files', function (Blueprint $table) {
             $table->id();
             $table->string('unique_id')->unique();
             $table->foreignId('user_id');
-            $table->string('mermaid_id')->default('');
+            $table->string('collection_id')->default('');
             $table->string('file');
             $table->string('file_type')->default(FILE_TYPE_IMAGE);
             $table->string('preview_file')->default("");            
@@ -39,11 +39,11 @@ class AddFieldsMermaids extends Migration
             $table->timestamps();
         });
 
-        Schema::create('mermaid_payments', function (Blueprint $table) {
+        Schema::create('collection_payments', function (Blueprint $table) {
             $table->id();
             $table->string('unique_id')->unique();
             $table->foreignId('user_id');
-            $table->foreignId('mermaid_id');
+            $table->foreignId('collection_id');
             $table->string('payment_id');
             $table->string('payment_mode')->default(CARD);
             $table->float('amount')->default(0.00);
@@ -63,8 +63,8 @@ class AddFieldsMermaids extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('mermaids');
-        Schema::dropIfExists('mermaid_files');
-        Schema::dropIfExists('mermaid_payments');
+        Schema::dropIfExists('collections');
+        Schema::dropIfExists('collection_files');
+        Schema::dropIfExists('collection_payments');
     }
 }

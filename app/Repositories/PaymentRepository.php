@@ -204,8 +204,6 @@ class PaymentRepository {
 
             $vod_payment->paid_date = now();
 
-            // Commission calculation & update the earnings to other user wallet
-
             $admin_commission_in_per = Setting::get('subscription_admin_commission', 1)/100;
 
             $admin_amount = $total * $admin_commission_in_per;
@@ -220,7 +218,6 @@ class PaymentRepository {
 
             $vod_payment->save();
             
-            // Add to post user wallet
             if($vod_payment->status == PAID_STATUS) {
 
                 if($total > 0) {
@@ -3429,25 +3426,39 @@ class PaymentRepository {
 
     }
 
-    public static function mermaid_payment_wallet_update($request, $mermaid, $mermaid_payment) {
+    /**
+     * @method collection_payment_wallet_update
+     *
+     * @uses collection payment amount will update to the collection wallet
+     *
+     * @created RA Shakthi
+     *
+     * @updated 
+     *
+     * @param
+     *
+     * @return
+     */
+
+    public static function collection_payment_wallet_update($request, $collection, $collection_payment) {
 
         try {
 
             $to_user_inputs = [
-                'id' => $mermaid->user_id,
-                'received_from_user_id' => $mermaid_payment->user_id,
-                'total' => $mermaid_payment->paid_amount ?? 0.00, 
-                'user_pay_amount' => $mermaid_payment->user_amount ?? 0.00,
-                'paid_amount' => $mermaid_payment->user_amount ?? 0.00,
+                'id' => $collection->user_id,
+                'received_from_user_id' => $collection_payment->user_id,
+                'total' => $collection_payment->paid_amount ?? 0.00, 
+                'user_pay_amount' => $collection_payment->user_amount ?? 0.00,
+                'paid_amount' => $collection_payment->user_amount ?? 0.00,
                 'payment_type' => WALLET_PAYMENT_TYPE_CREDIT,
                 'amount_type' => WALLET_AMOUNT_TYPE_ADD,
-                'payment_id' => $mermaid_payment->payment_id,
-                'admin_amount' => $mermaid_payment->admin_amount ?? 0.00,
-                'user_amount' => $mermaid_payment->user_amount ?? 0.00,
+                'payment_id' => $collection_payment->payment_id,
+                'admin_amount' => $collection_payment->admin_amount ?? 0.00,
+                'user_amount' => $collection_payment->user_amount ?? 0.00,
                 'usage_type' => USAGE_TYPE_PPV,
-                'user_token' => $mermaid_payment->amount ?? 0.00,
-                'admin_token' => $mermaid_payment->admin_amount ?? 0.00,
-                'tokens' => $mermaid_payment->user_amount ?? 0.00, 
+                'user_token' => $collection_payment->amount ?? 0.00,
+                'admin_token' => $collection_payment->admin_amount ?? 0.00,
+                'tokens' => $collection_payment->user_amount ?? 0.00, 
             ];
 
             $to_user_request = new Request($to_user_inputs);
@@ -3475,12 +3486,12 @@ class PaymentRepository {
 
     }
 
-    /**
+     /**
      * @method chat_message_payment_wallet_update
      *
      * @uses chat message payment will update to the model wallet
      *
-     * @created
+     * @created RA Shakthi
      *
      * @updated
      *
@@ -3488,8 +3499,11 @@ class PaymentRepository {
      *
      * @return
      */
+
     public static function chat_message_payment_wallet_update($request, $chat_message_payment) {
+
         try {
+
             $to_user_inputs = [
                 'id' => $request->id,
                 'to_user_id' => $request->to_user_id,
@@ -3508,20 +3522,31 @@ class PaymentRepository {
                 'tokens' => $chat_message_payment->user_token, 
                 'usage_type' => USAGE_TYPE_CHAT_MESSAGE
             ];
+
             $to_user_request = new \Illuminate\Http\Request();
+
             $to_user_request->replace($to_user_inputs);
+
             $to_user_payment_response = self::user_wallets_payment_save($to_user_request)->getData();
+
             if($to_user_payment_response->success) {
+
                 DB::commit();
+
                 return $to_user_payment_response;
+
             } else {
+
                 throw new Exception($to_user_payment_response->error, $to_user_payment_response->error_code);
             }
         
         } catch(Exception $e) {
-            $response = ['success' => false, 'error' => $e->getMessage(), 'error_code' => $e->getCode()];
-            return response()->json($response, 200);
-        }
-    }
 
+            $response = ['success' => false, 'error' => $e->getMessage(), 'error_code' => $e->getCode()];
+
+            return response()->json($response, 200);
+
+        }
+
+    }
 }

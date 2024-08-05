@@ -2,7 +2,7 @@
 
 namespace App\Services;
 use Illuminate\Http\Request;
-use App\Models\{Subscription, Post, LiveVideo, ChatAsset, AudioCallRequest, VideoCallRequest, User};
+use App\Models\{Subscription, Post, LiveVideo, ChatAsset, AudioCallRequest, VideoCallRequest, User, Collection};
 use Akaunting\Setting\Facade as Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -49,6 +49,10 @@ class PromoCodeService {
                 case CHAT_MESSAGE_PAYMENTS:
                     $to_user = User::firstWhere(['id' => $request->to_user_id, 'is_content_creator' => CONTENT_CREATOR]);
                     $data = $to_user->chat_message_token ?: 0.00;
+                    break;
+                case COLLECTION_PAYMENTS:
+                    $collection = Collection::firstWhere(['id' => $request->collection_id]);
+                    $data = $collection->token ?: 0.00;
                     break;
                     
                 default:

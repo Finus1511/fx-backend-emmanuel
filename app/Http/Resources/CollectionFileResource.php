@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class MermaidPaymentResource extends JsonResource
+class CollectionFileResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,20 +14,16 @@ class MermaidPaymentResource extends JsonResource
     public function toArray($request)
     {
         $timezone = $request->timezone ?? DEFAULT_TIMEZONE;
+
         return [
             'id' => $this->id,
             'unique_id' => $this->unique_id,
-            'user_details' =>  UserPreviewResource::make($this->user),
-            'mermaid_details' => MermaidResource::make($this->mermaid),
-            'payment_id' => $this->payment_id ?: '',
-            'payment_mode' => $this->payment_mode,
-            'admin_amount' => $this->admin_amount ?: 0.00,
-            'user_amount' => $this->user_amount ?: 0.00,
-            'amount' => $this->amount ?: 0.00,
-            'amount_formatted' => formatted_amount($this->amount),
-            'currency' => $this->currency ?: '',
+            'collection_id' => $this->collection_id,
+            'file' => $this->file ?: '',
+            'file_type' => $this->file_type ?: '',
+            'preview_file' => $this->preview_file,
             'status' => $this->status,
-            'status_formatted' => $this->status == PAID ? tr('paid'): tr('not_paid'),
+            'status_formatted' => $this->status ? tr('approved') : tr('declined'),
             'created_at' => common_date($this->created_at, $timezone),
             'updated_at' => common_date($this->updated_at, $timezone)
         ];

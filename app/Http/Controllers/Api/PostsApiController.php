@@ -588,10 +588,11 @@ class PostsApiController extends Controller
         try {
 
             $rules = [
-                'file' => 'required',
+                'file' => 'required_unless:file_type,' . FILE_TYPE_URL,
                 'file_type' => 'required',
                 'post_id' => 'nullable|exists:posts,id',
                 'preview_file' => 'nullable|image|mimes:jpeg,png,gif,bmp,tiff,webp',
+                'youtube_link' => 'required_if:file_type,' . FILE_TYPE_URL,
             ];
 
             Helper::custom_validator($request->all(),$rules);
@@ -611,126 +612,54 @@ class PostsApiController extends Controller
 
             $files = $request->file;
 
-            if(!$files) {
+            if($request->file_type ==FILE_TYPE_URL && $request->youtube_link) {
 
-                throw new Exception(api_error(227), 227);
+                $i_frame = $request->youtube_link;
+
+                $src_start = strpos($i_frame, 'src="') + 5;
+
+                $src_end = strpos($i_frame, '"', $src_start);
+
+                $src_url = substr($i_frame, $src_start, $src_end - $src_start);
+
+                preg_match('/\/embed\/([^?]*)/', $src_url, $matches);
+
+                $video_id = $matches[1] ?? null;
+
+                $preview_file =  $video_id ? "https://img.youtube.com/vi/$video_id/0.jpg" : asset('placeholder.jpeg');
+
+                $post_file = PostFile::create([
+                    'user_id' => $request->input('id'),
+                    'youtube_link' => $request->input('youtube_link'),
+                    'file_type' => $request->file_type,
+                    'preview_file' => $preview_file,
+                ]);
+
+               $post_file_id = $post_file->id;
+
+               $file_url = $post_file->youtube_link;
+
+               $post_blur_file = $post_file->preview_file;
+
             }
 
-            if(!is_array($files)) {
+            if($files) {
 
-               $file = $files;
+               if(!is_array($files)) {
 
-               $filename = rand(1,1000000).'-post-'.$request->file_type;
+                   $file = $files;
 
-               $folder_path = POST_PATH.$request->id.'/';
+                   $filename = rand(1,1000000).'-post-'.$request->file_type;
 
-               $post_file_url = Helper::post_upload_file($file, $folder_path, $filename);
+                   $folder_path = POST_PATH.$request->id.'/';
 
-               $ext = $file->getClientOriginalExtension();
+                   $post_file_url = Helper::post_upload_file($file, $folder_path, $filename);
 
-               $video_extensions = ['mp4', 'mp3', 'mov', 'flv', 'avi', 'webm', 'mkv'];
+                   $ext = $file->getClientOriginalExtension();
 
-               if($post_file_url) {
+                   $video_extensions = ['mp4', 'mp3', 'mov', 'flv', 'avi', 'webm', 'mkv'];
 
-                    $post_file = new PostFile;
-
-                    $post_file->user_id = $request->id;
-
-                    $post_file->post_id = 0;
-
-                    $post_file->file = $post_file_url;
-
-                    $post_file->file_type = $request->file_type;
-
-                    $post_file->blur_file = $request->file_type == "image" && !in_array($ext, $video_extensions) ? Setting::get('ppv_image_placeholder') : Setting::get('post_image_placeholder');
-
-                    if($request->file_type == 'audio'){
-
-                        if ($request->hasFile('preview_file')) {
-
-                            $post_file->preview_file = Helper::storage_upload_file($request->file('preview_file'), POST_PATH);
-
-                            $post_file->blur_file = $post_file->preview_file;
-
-                        } else {
-
-                            $post_file->preview_file = Setting::get('audio_thumbnail_placeholder') ?: asset('placeholder.jpeg');
-                            
-                            $post_file->blur_file = $post_file->preview_file;
-                        }
-                    }
-
-                    if($request->file_type == 'video') {
-
-                        $filename_img = rand(1,1000000).'-post-image.jpg';
-
-                        $video_thumbnail_data['original_video_path'] = storage_path('app/public/'.$folder_path.$filename.'.'.$ext);
-
-                        $video_thumbnail_data['save_file_path'] = storage_path('app/public/'.$folder_path);
-
-                        $video_thumbnail_data['thumbnail_file_name'] = $filename_img;
-
-                        VideoThumbnailJob::dispatch($video_thumbnail_data);
-
-                        $post_file->preview_file = asset('storage/'.$folder_path.$filename_img);
-
-                        if(Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
-
-                            $video_file = public_path("storage/".$folder_path.get_video_end($post_file_url));
-
-                            $new_video_path = public_path("storage/".$folder_path."water-".get_video_end($post_file_url));
-
-                            $job_data['video'] = $video_file;
-
-                            $job_data['watermark_video'] = $new_video_path;
-
-                            $this->dispatch(new \App\Jobs\VideoWatermarkPositionJob($job_data));
-                        }
-                    }
-
-                    $post_file->save();                    
-
-                }
-
-                if($request->file_type=='image' && Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
-
-                   $storage_file_path = public_path("storage/".$folder_path.get_video_end($post_file_url));
-
-                   CommonRepo::add_watermark_to_image($storage_file_path);
-               }
-
-               $file_data['post_file'] = $post_file;
-
-               $post_file_id != "" && $post_file_id .= ",";
-
-               $post_file_id .= $post_file->post_file_id;
-
-               // $file_url != "" && $file_url .= ",";
-
-               $file_url[] = $post_file_url;
-
-               $post_blur_file != "" && $post_blur_file .= ",";
-
-               $post_blur_file .= $post_file->blur_file;
-
-               $data['post_file'] = $post_file;
-           }
-
-           else {
-
-                foreach($files as $file){
-
-                    $filename = rand(1,1000000).'-post-'.$request->file_type;
-
-                    $folder_path = POST_PATH.$request->id.'/';
-
-                    $post_file_url = Helper::post_upload_file($file, $folder_path, $filename);
-
-                    $ext = $file->getClientOriginalExtension();
-
-                    $video_extensions = ['mp4', 'mp3', 'mov', 'flv', 'avi', 'webm', 'mkv'];
-
-                    if($post_file_url) {
+                   if($post_file_url) {
 
                         $post_file = new PostFile;
 
@@ -744,34 +673,6 @@ class PostsApiController extends Controller
 
                         $post_file->blur_file = $request->file_type == "image" && !in_array($ext, $video_extensions) ? Setting::get('ppv_image_placeholder') : Setting::get('post_image_placeholder');
 
-                        if($request->file_type == 'video') {
-
-                            $filename_img = rand(1,1000000).'-post-image.jpg';
-
-                            $video_thumbnail_data['original_video_path'] = storage_path('app/public/'.$folder_path.$filename.'.'.$ext);
-
-                            $video_thumbnail_data['save_file_path'] = storage_path('app/public/'.$folder_path);
-
-                            $video_thumbnail_data['thumbnail_file_name'] = $filename_img;
-
-                            VideoThumbnailJob::dispatch($video_thumbnail_data);
-
-                            $post_file->preview_file = asset('storage/'.$folder_path.$filename_img) ?? Setting::get('post_video_placeholder');
-
-                            if(Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
-
-                                $video_file = public_path("storage/".$folder_path.get_video_end($post_file_url)); 
-
-                                $new_video_path = public_path("storage/".$folder_path."water-".get_video_end($post_file_url)); 
-
-                                $job_data['video'] = $video_file;
-
-                                $job_data['watermark_video'] = $new_video_path;
-
-                                $this->dispatch(new \App\Jobs\VideoWatermarkPositionJob($job_data));
-
-                            }
-                        }
                         if($request->file_type == 'audio'){
 
                             if ($request->hasFile('preview_file')) {
@@ -786,40 +687,168 @@ class PostsApiController extends Controller
                                 
                                 $post_file->blur_file = $post_file->preview_file;
                             }
-                       }
+                        }
 
-                        $post_file->save();
+                        if($request->file_type == 'video') {
+
+                            $filename_img = rand(1,1000000).'-post-image.jpg';
+
+                            $video_thumbnail_data['original_video_path'] = storage_path('app/public/'.$folder_path.$filename.'.'.$ext);
+
+                            $video_thumbnail_data['save_file_path'] = storage_path('app/public/'.$folder_path);
+
+                            $video_thumbnail_data['thumbnail_file_name'] = $filename_img;
+
+                            VideoThumbnailJob::dispatch($video_thumbnail_data);
+
+                            $post_file->preview_file = asset('storage/'.$folder_path.$filename_img);
+
+                            if(Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
+
+                                $video_file = public_path("storage/".$folder_path.get_video_end($post_file_url));
+
+                                $new_video_path = public_path("storage/".$folder_path."water-".get_video_end($post_file_url));
+
+                                $job_data['video'] = $video_file;
+
+                                $job_data['watermark_video'] = $new_video_path;
+
+                                $this->dispatch(new \App\Jobs\VideoWatermarkPositionJob($job_data));
+                            }
+                        }
+
+                        $post_file->save();                    
 
                     }
 
                     if($request->file_type=='image' && Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
 
-                       $storage_file_path = public_path("storage/".$folder_path.get_video_end($post_file_url)); 
+                       $storage_file_path = public_path("storage/".$folder_path.get_video_end($post_file_url));
 
                        CommonRepo::add_watermark_to_image($storage_file_path);
-                    }
+                   }
 
-
-                   // $file_url != "" && $file_url .= ",";
-
-                   $file_url[] = $post_file_url;
-
+                   $file_data['post_file'] = $post_file;
 
                    $post_file_id != "" && $post_file_id .= ",";
 
                    $post_file_id .= $post_file->post_file_id;
 
+                   // $file_url != "" && $file_url .= ",";
+
+                   $file_url[] = $post_file_url;
+
                    $post_blur_file != "" && $post_blur_file .= ",";
 
                    $post_blur_file .= $post_file->blur_file;
 
-                   $post_file->post_file = $post_file->file;
+                   $data['post_file'] = $post_file;
+               }else {
 
-                   array_push($file_data, $post_file);
+                    foreach($files as $file){
 
+                        $filename = rand(1,1000000).'-post-'.$request->file_type;
+
+                        $folder_path = POST_PATH.$request->id.'/';
+
+                        $post_file_url = Helper::post_upload_file($file, $folder_path, $filename);
+
+                        $ext = $file->getClientOriginalExtension();
+
+                        $video_extensions = ['mp4', 'mp3', 'mov', 'flv', 'avi', 'webm', 'mkv'];
+
+                        if($post_file_url) {
+
+                            $post_file = new PostFile;
+
+                            $post_file->user_id = $request->id;
+
+                            $post_file->post_id = 0;
+
+                            $post_file->file = $post_file_url;
+
+                            $post_file->file_type = $request->file_type;
+
+                            $post_file->blur_file = $request->file_type == "image" && !in_array($ext, $video_extensions) ? Setting::get('ppv_image_placeholder') : Setting::get('post_image_placeholder');
+
+                            if($request->file_type == 'video') {
+
+                                $filename_img = rand(1,1000000).'-post-image.jpg';
+
+                                $video_thumbnail_data['original_video_path'] = storage_path('app/public/'.$folder_path.$filename.'.'.$ext);
+
+                                $video_thumbnail_data['save_file_path'] = storage_path('app/public/'.$folder_path);
+
+                                $video_thumbnail_data['thumbnail_file_name'] = $filename_img;
+
+                                VideoThumbnailJob::dispatch($video_thumbnail_data);
+
+                                $post_file->preview_file = asset('storage/'.$folder_path.$filename_img) ?? Setting::get('post_video_placeholder');
+
+                                if(Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
+
+                                    $video_file = public_path("storage/".$folder_path.get_video_end($post_file_url)); 
+
+                                    $new_video_path = public_path("storage/".$folder_path."water-".get_video_end($post_file_url)); 
+
+                                    $job_data['video'] = $video_file;
+
+                                    $job_data['watermark_video'] = $new_video_path;
+
+                                    $this->dispatch(new \App\Jobs\VideoWatermarkPositionJob($job_data));
+
+                                }
+                            }
+                            if($request->file_type == 'audio'){
+
+                                if ($request->hasFile('preview_file')) {
+
+                                    $post_file->preview_file = Helper::storage_upload_file($request->file('preview_file'), POST_PATH);
+
+                                    $post_file->blur_file = $post_file->preview_file;
+
+                                } else {
+
+                                    $post_file->preview_file = Setting::get('audio_thumbnail_placeholder') ?: asset('placeholder.jpeg');
+                                    
+                                    $post_file->blur_file = $post_file->preview_file;
+                                }
+                           }
+
+                            $post_file->save();
+
+                        }
+
+                        if($request->file_type=='image' && Setting::get('is_watermark_logo_enabled') && Setting::get('watermark_logo')){
+
+                           $storage_file_path = public_path("storage/".$folder_path.get_video_end($post_file_url)); 
+
+                           CommonRepo::add_watermark_to_image($storage_file_path);
+                        }
+
+
+                       // $file_url != "" && $file_url .= ",";
+
+                       $file_url[] = $post_file_url;
+
+
+                       $post_file_id != "" && $post_file_id .= ",";
+
+                       $post_file_id .= $post_file->post_file_id;
+
+                       $post_blur_file != "" && $post_blur_file .= ",";
+
+                       $post_blur_file .= $post_file->blur_file;
+
+                       $post_file->post_file = $post_file->file;
+
+                       array_push($file_data, $post_file);
+
+                    }
+
+                    $data['post_file'] = $file_data;
                 }
 
-                $data['post_file'] = $file_data;
             }
 
            $data['post_file_id'] = $post_file_id;
@@ -827,6 +856,8 @@ class PostsApiController extends Controller
            $data['file'] = $file_url;
 
            $data['blur_file'] = $post_blur_file;
+
+           $data['file_type'] = $request->file_type;
 
            return $this->sendResponse(api_success(151), 151, $data);
 

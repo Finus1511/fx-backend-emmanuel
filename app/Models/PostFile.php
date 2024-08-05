@@ -9,9 +9,9 @@ use Log, Validator, Exception, DB, Setting;
 
 class PostFile extends Model
 {
-    protected $fillable = ['file', 'post_id'];
+    protected $fillable = ['file', 'post_id', 'youtube_link', 'user_id', 'preview_file', 'file_type'];
 
-    protected $hidden = ['deleted_at', 'id', 'unique_id', 'file'];
+    protected $hidden = ['deleted_at', 'id', 'unique_id', 'file', 'youtube_link'];
 
 	protected $appends = ['post_file_id', 'post_file_unique_id'];
 
@@ -35,7 +35,8 @@ class PostFile extends Model
         return 
             $query->select(
             'post_files.*',
-            'post_files.file as post_file'
+            'post_files.file as post_file',
+            'post_files.youtube_link as youtube_url'
             );
     
     }
@@ -49,7 +50,8 @@ class PostFile extends Model
 
         return $query->select(
             'post_files.*',
-            'post_files.blur_file as post_file'
+            'post_files.blur_file as post_file',
+            'post_files.preview_file as youtube_url'
             );
     
     }

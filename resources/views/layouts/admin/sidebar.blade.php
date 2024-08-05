@@ -232,6 +232,11 @@
                 </a>
             </li>
             @endif
+            <li id="collections">
+                <a href="{{route('admin.collections.index')}}">
+                <i class="fa fa-file"></i> <span>{{tr('collections')}}</span>
+                </a>
+            </li>
             <li class="header nav-small-cap">{{tr('personalize_requests')}}</li>
             <li id="personalized_requests">
                 <a href="{{route('admin.personalized_requests.index')}}">
@@ -274,6 +279,7 @@
                     </li>
                     @endif
                     <li id="chat-asset-payments"><a href="{{route('admin.chat_asset_payments.index')}}">{{tr('chat_asset_payments')}}</a></li>
+                    <li id="chat_message_payments"><a href="{{route('admin.chat_message_payments.index')}}">{{tr('message_payments')}}</a></li>
                     <li id="order-payments"><a href="{{route('admin.order.payments')}}">{{tr('order_payments')}}</a></li>
                     <li id="lss-payments"><a href="{{route('admin.live_stream_shoppings.payments')}}">{{tr('lss_payments')}}</a></li>
                     <li id="lss-product-payments"><a href="{{route('admin.live_stream_shoppings.product_payments')}}">{{tr('lss_product_payments')}}</a></li>

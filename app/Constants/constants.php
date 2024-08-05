@@ -283,6 +283,7 @@ if(!defined('FILE_TYPE_VIDEO')) define('FILE_TYPE_VIDEO', 'video');
 if(!defined('FILE_TYPE_AUDIO')) define('FILE_TYPE_AUDIO', 'audio');
 if(!defined('FILE_TYPE_TEXT')) define('FILE_TYPE_TEXT', 'text');
 if(!defined('FILE_TYPE_DOCUMENT')) define('FILE_TYPE_DOCUMENT', 'document');
+if(!defined('FILE_TYPE_URL')) define('FILE_TYPE_URL', 'url');
 
 if(!defined('STORAGE_TYPE_S3')) define('STORAGE_TYPE_S3', 1);
 if(!defined('STORAGE_TYPE_LOCAL')) define('STORAGE_TYPE_LOCAL', 0);
@@ -300,7 +301,7 @@ if(!defined('USAGE_TYPE_WITHDRAW')) define('USAGE_TYPE_WITHDRAW', 'withdraw');
 if(!defined('USAGE_TYPE_REFERRAL')) define('USAGE_TYPE_REFERRAL', 'referral');
 
 if(!defined('USAGE_TYPE_CHAT')) define('USAGE_TYPE_CHAT', 'chat');
-if(!defined('USAGE_TYPE_MERMAID')) define('USAGE_TYPE_MERMAID', 'mermaid');
+if(!defined('USAGE_TYPE_COLLECTION')) define('USAGE_TYPE_COLLECTION', 'collection');
 if(!defined('USAGE_TYPE_CHAT_MESSAGE')) define('USAGE_TYPE_CHAT_MESSAGE', 'chat-message');
 
 
@@ -466,9 +467,10 @@ if(!defined('CHAT_MESSAGE_PAYMENTS')) define('CHAT_MESSAGE_PAYMENTS', 'chat-mess
 if(!defined('ORDER_PAYMENTS')) define('ORDER_PAYMENTS', 'order-payments');
 if(!defined('LIVE_VIDEO_PAYMENTS')) define('LIVE_VIDEO_PAYMENTS', 'live-video-payments');
 if(!defined('TOTAL_PAYMENTS')) define('TOTAL_PAYMENTS', 'total-payments');
+if(!defined('COLLECTION_PAYMENTS')) define('COLLECTION_PAYMENTS', 'collection-payments');
 if(!defined('ALL_PAYMENTS')) define('ALL_PAYMENTS', 'all-payments');
 
-if(!defined('PLATFORMS')) define('PLATFORMS', implode(',', [SUBSCRIPTION_PAYMENTS,USER_TIPS,POST_PAYMENTS,VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS,CHAT_ASSET_PAYMENTS,ORDER_PAYMENTS,LIVE_VIDEO_PAYMENTS,CHAT_MESSAGE_PAYMENTS, ALL_PAYMENTS]));
+if(!defined('PLATFORMS')) define('PLATFORMS', implode(',', [SUBSCRIPTION_PAYMENTS,USER_TIPS,POST_PAYMENTS,VIDEO_CALL_PAYMENTS,AUDIO_CALL_PAYMENTS,CHAT_ASSET_PAYMENTS,ORDER_PAYMENTS,LIVE_VIDEO_PAYMENTS,CHAT_MESSAGE_PAYMENTS, ALL_PAYMENTS, COLLECTION_PAYMENTS]));
 
 if(!defined('ACTIVE')) define('ACTIVE', 1);
 if(!defined('INACTIVE')) define('INACTIVE', 0);

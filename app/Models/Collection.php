@@ -5,29 +5,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Helpers\Helper;
 
-class MermaidFile extends Model
+class Collection extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
     public function user() {
-       return $this->belongsTo(User::class, 'sender_id');
+       return $this->belongsTo(User::class, 'user_id');
     }
-    public function mermaid() {
-        return $this->belongsTo(Mermaid::class)->withDefault();
+    public function collectionFiles()
+    {
+        return $this->hasMany(CollectionFile::class, 'collection_id');
     }
     public static function boot() {
         parent::boot();
         static::creating(function ($model) {
-            $model->attributes['unique_id'] = "MF-".uniqid();
+            $model->attributes['unique_id'] = "C-".uniqid();
         });
         static::created(function($model) {
             $id = str_pad($model->attributes['id'], 5, '0', STR_PAD_LEFT);
-            $model->attributes['unique_id'] = "MF-".$id;
+            $model->attributes['unique_id'] = "C-".$id;
             
             $model->save();
         });
         static::deleting(function ($model) {
-            Helper::storage_delete_file($model->file, MERMAID_FILE_PATH);
+            Helper::storage_delete_file($model->thumbnail, COLLECTION_FOLDER_PATH);
+            foreach ($model->collectionFiles as $key => $collectionFile) {
+                $collectionFile->delete();
+            }
         });
     }
 }

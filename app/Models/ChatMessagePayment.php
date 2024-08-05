@@ -8,8 +8,11 @@ class ChatMessagePayment extends Model
 {
     use HasFactory;
    protected $guarded = ['id'];
-    public function user() {
-        return $this->belongsTo(User::class)->withDefault();
+    public function fromUser() {
+        return $this->belongsTo(User::class, 'user_id')->withDefault();
+    }
+    public function toUser() {
+        return $this->belongsTo(User::class, 'to_user_id')->withDefault();
     }
    public static function boot() {
         parent::boot();

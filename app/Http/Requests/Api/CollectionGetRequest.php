@@ -5,7 +5,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class MermaidGetRequest extends FormRequest
+class CollectionGetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class MermaidGetRequest extends FormRequest
     public function rules()
     {
         return [
-           'mermaid_unique_id' => 'required|exists:mermaids,unique_id,user_id,'.request()->id
+           'collection_unique_id' => 'required|exists:collections,unique_id,user_id,'.request()->id
         ];
     }
     /**

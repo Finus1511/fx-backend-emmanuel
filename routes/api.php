@@ -899,15 +899,17 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
         });
     });
 
-    Route::controller(Api\MermaidController::class)->group(function() {
+    Route::controller(Api\CollectionController::class)->group(function() {
         Route::group(['prefix' => 'collections'], function() {
             Route::post('', 'index');
             Route::post('store', 'store');
             Route::post('destroy', 'destroy');
             Route::post('files_upload', 'files_upload');
+            Route::post('files_list', 'files_list');
+            Route::post('files_list_for_others', 'files_list_for_others');
             Route::post('files_remove', 'files_remove');
             Route::post('view', 'view');
-            Route::post('mermaids_payment_by_wallet', 'mermaids_payment_by_wallet');
+            Route::post('collections_payment_by_wallet', 'collections_payment_by_wallet');
         });
     });
 

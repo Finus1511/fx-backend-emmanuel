@@ -434,7 +434,7 @@ class ChatApiController extends Controller
                 'paid_amount' => $user_pay_amount * Setting::get('token_amount'),
                 'payment_type' => WALLET_PAYMENT_TYPE_PAID,
                 'amount_type' => WALLET_AMOUNT_TYPE_MINUS,
-                'payment_id' => 'WPP-'.rand(),
+                'payment_id' => 'CMP-'.rand(),
                 'usage_type' => USAGE_TYPE_CHAT,
                 'tokens' => $user_pay_amount,
                 'promo_code'=> $request->promo_code,

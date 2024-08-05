@@ -5,14 +5,25 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Repositories\CommonRepository as CommonRepo;
-use App\Models\{ChatMessage, ChatAsset, User};
+use App\Models\{ChatMessage, ChatAsset, User, ChatMessagePayment};
 use App\Helpers\Helper;
-use DB, Exception, Auth;
+use DB, Exception, Auth, Setting;
 use Carbon\Carbon;
 
 class AdminChatController extends Controller
 {
+     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct(Request $request) {
 
+        $this->middleware('auth:admin');
+
+        $this->take = $request->take ?: (Setting::get('admin_take_count') ?: TAKE_COUNT);
+
+    }
      /**
      * @method admin_chat_messages()
      *
@@ -190,5 +201,78 @@ class AdminChatController extends Controller
 
             return redirect()->back()->with('flash_error', $e->getMessage());
         }
+    }
+
+    /**
+     * @method chat_message_payments_index()
+     *
+     * @uses To get list of the chat message payments
+     *
+     * @created RA Shakthi
+     *
+     * @updated
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function chat_message_payments_index(Request $request)
+    {
+        try {
+
+            $base_query = ChatMessagePayment::when($request->filled('status'), function ($query) use ($request) {
+                    $query->where('status', $request->status);
+                })->when($request->filled('user_id'), function ($query) use ($request) {
+                    $query->where('user_id', $request->user_id);
+                })->when($request->filled('search_key'), function ($query) use ($request) {
+                    $query->where(function ($query) use ($request) {
+                        $query->where('unique_id', 'LIKE', '%' . $request->search_key . '%')
+                        ->orWhere('payment_id', 'LIKE', '%' . $request->search_key . '%')
+                        ->orWhereHas('user', function ($query) use ($request) {
+                        $query->where('name', 'LIKE', '%' . $request->search_key . '%');
+                        });
+                    });
+                });
+
+            $chat_message_payments = $base_query->paginate($this->take);
+
+            return view('admin.users.chat.message_payments', [
+                'page' => 'payments',
+                'sub_page' => 'chat_message_payments',
+                'chat_message_payments' => $chat_message_payments
+            ]);
+
+        } catch (Exception $e) {
+
+            return redirect()->back()->with('flash_error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * Created RA Shakthi
+     * 
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function chat_message_payments_view(Request $request) {
+       
+        try {
+
+            $chat_message_payment = ChatMessagePayment::with('fromUser', 'toUser')->find($request->chat_message_payment_id);
+
+            throw_if(!$chat_message_payment, new Exception(tr('chat_message_payment_not_found')));
+
+            return view('admin.users.chat.message_payment_view')
+            ->with('page', 'payments') 
+            ->with('sub_page', 'chat_message_payments') 
+            ->with(compact(['chat_message_payment']));
+            
+        } catch (Exception $e) {
+
+            return redirect()->back()->with('flash_error', $e->getMessage());
+        }
+    
     }
 }

@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Http\Requests\Api;
+
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
-class MermaidPaymentGetRequest extends FormRequest
+class CollectionFileUploadRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -16,6 +18,7 @@ class MermaidPaymentGetRequest extends FormRequest
     {
         return true;
     }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -23,13 +26,19 @@ class MermaidPaymentGetRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-           'mermaid_unique_id' => 'required|exists:mermaids,unique_id'
+        $rules = [
+            'files' => 'required|array',
+            'files.*' => 'file|mimes:jpg,jpeg,png,gif,mp4,avi,mov',
+            'collection_unique_id' => 'required|exists:collections,unique_id,user_id,'.request()->id
         ];
+
+        return $rules;
     }
+
     /**
      * Handle a failed validation attempt.
      *
+     * @param Validator $validator
      * @return void
      */
     protected function failedValidation(Validator $validator)
@@ -37,7 +46,7 @@ class MermaidPaymentGetRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'success' => false,
             'error' => $validator->errors()->first(),
-            'error_code' => 422
+            'error_code' => 422,
         ]));
     }
 }

@@ -141,6 +141,14 @@ img {
   background:none;
 }
 
+.icon-section-setup{
+    margin-left: -38px;
+    margin-top: 6px;
+    margin-top: 5px;
+    color: red;
+    font-size: 23px;
+}
+
 img {
   object-fit: cover;
 }
@@ -814,6 +822,10 @@ display: none;
 
 .type-message-input {
   height: 55px;
+}
+
+.large-icon {
+  font-size: 24px; 
 }
 
 /* Chat UI Aside Section CSS*/

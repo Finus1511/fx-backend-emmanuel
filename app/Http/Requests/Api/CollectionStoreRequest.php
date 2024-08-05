@@ -5,7 +5,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class MermaidStoreRequest extends FormRequest
+class CollectionStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -28,7 +28,7 @@ class MermaidStoreRequest extends FormRequest
             'description' => 'required',
             'amount' => 'required|numeric|min:1',
             'thumbnail' => 'required|mimes:jpeg,jpg,png,gif|max:2048',
-            'mermaid_id' => 'nullable|exists:mermaids,id',
+            'collection_id' => 'nullable|exists:collections,id',
         ];
     }
     /**
