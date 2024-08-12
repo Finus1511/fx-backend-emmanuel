@@ -3237,6 +3237,9 @@ class PostsApiController extends Controller
                                         ->whereNotIn('posts.id',$report_posts)
                                         ->whereIn('id', $post_ids)
                                         ->whereHas('user')->whereHas('postFiles')
+                                        ->when(request('content_creator_id'), function($query) use ($request) {
+                                            $query->where('user_id', $request->content_creator_id);
+                                        })
                                         ->when(request('hashtag'), function($query) use ($request) {
                                             $query->where('content', "LIKE", "%". "#$request->hashtag" . "%");
                                         })

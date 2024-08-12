@@ -114,7 +114,7 @@ class FollowersApiController extends Controller
 
             $exclude_ids = [$request->id];
 
-            $base_query = $total_query = User::Approved()->OtherResponse()->whereNotIn('users.id', $exclude_ids)->where('users.name', 'like', "%".$request->key."%")->inRandomOrder();
+            $base_query = $total_query = User::Approved()->OtherResponse()->whereNotIn('users.id', $exclude_ids)->where('users.name', 'like', "%".$request->key."%")->where('is_content_creator', CONTENT_CREATOR)->inRandomOrder();
 
             $users = $base_query->skip($this->skip)->take($this->take)->get();
 
