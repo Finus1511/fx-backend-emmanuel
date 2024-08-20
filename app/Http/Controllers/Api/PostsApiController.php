@@ -857,7 +857,7 @@ class PostsApiController extends Controller
 
            $data['blur_file'] = $post_blur_file;
 
-           $data['file_type'] = $request->file_type;
+           $data['file_type'] = $request->file_type ?? FILE_TYPE_IMAGE;
 
            return $this->sendResponse(api_success(151), 151, $data);
 
@@ -899,13 +899,13 @@ class PostsApiController extends Controller
 
             Helper::custom_validator($request->all(),$rules);
 
-            if($request->file) {
+            if($request->post_file_id) {
 
-                $post_file = \App\Models\PostFile::where('file', $request->file)->first();
+                $post_file = \App\Models\PostFile::where('id', $request->post_file_id)->first();
 
             } else {
 
-                $post_file = \App\Models\PostFile::where('id', $request->post_file_id)->first();
+                $post_file = \App\Models\PostFile::where('file', $request->file)->first();
 
             }
 
@@ -923,7 +923,7 @@ class PostsApiController extends Controller
 
             }
 
-            $post_files = \App\Models\PostFile::whereIn('id',$post_file_ids)->pluck('file');
+            $post_files = \App\Models\PostFile::whereIn('id',$post_file_ids)->pluck('file') ?? [];
 
             $post_file_ids = $post_file_ids ? implode(',', $post_file_ids) : '';
             

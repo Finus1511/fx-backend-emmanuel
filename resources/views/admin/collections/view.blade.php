@@ -9,59 +9,61 @@
 @endsection
 @section('content')
 <section class="content">
-        <div class="row">
-            <div class="col-xl-12 col-lg-12">
-                <div class="card user-profile-view-sec">
-                    <div class="card-header border-bottom border-gray">
-                        <h4 class="card-title">{{tr('view_collection')}}</h4>
-                    </div>
-                    <div class="card-content">
-                        <div class="user-view-padding">
-                            <div class="row"> 
-                                <div class=" col-xl-6 col-lg-6 col-md-12">
-                                    <div class="table-responsive">
-                                        <table class="table table-xl mb-0">
-                                            <tr >
-                                                <th>{{tr('unique_id')}}</th>
-                                                <td>{{$collection->unique_id ?: tr('n_a')}}</td>
-                                            </tr>
-                                             <tr>
-                                                <th>{{tr('user')}}</th>
-                                                <td><a href="{{$collection->user->name ? route('admin.users.view',['user_id' => $collection->user_id] ?: 0) : '#'}}" class="{{ $collection->user->name ? '' : 'link-disabled'}}"> {{$collection->user->name ?? tr('n_a')}}</a></td>
-                                            </tr> 
-                                            <tr>
-                                                <th>{{ tr('name') }}</th>
-                                                <td>{{ $collection->name ?: tr('na')}}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>{{ tr('amount') }}</th>
-                                                <td>{{ $collection->amount ? formatted_amount($collection->amount) : 0.00}}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>{{tr('status')}}</th>
-                                                <td>
-                                                   <span class="btn {{ $collection->status ? 'btn-success' : 'btn-danger'}} btn-sm">{{$collection->status ? tr('approved') : tr('declined')}}</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>{{tr('created_at')}} </th>
-                                                <td>{{common_date($collection->created_at , Auth::guard('admin')->user()->timezone)}}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>{{tr('updated_at')}} </th>
-                                                <td>{{common_date($collection->updated_at , Auth::guard('admin')->user()->timezone)}}</td>
-                                            </tr> 
-                                        </table>
-                                    </div>
+    <div class="row">
+        <div class="col-xl-12 col-lg-12">
+            <div class="card user-profile-view-sec">
+                <div class="card-header border-bottom border-gray">
+                    <h4 class="card-title">{{tr('view_collection')}}</h4>
+                </div>
+                <div class="card-content">
+                    <div class="user-view-padding">
+                        <div class="row"> 
+                            <div class=" col-xl-6 col-lg-6 col-md-12">
+                                <div class="table-responsive">
+                                    <table class="table table-xl mb-0">
+                                        <tr >
+                                            <th>{{tr('unique_id')}}</th>
+                                            <td>{{$collection->unique_id ?: tr('n_a')}}</td>
+                                        </tr>
+                                         <tr>
+                                            <th>{{tr('user')}}</th>
+                                            <td><a href="{{$collection->user->name ? route('admin.users.view',['user_id' => $collection->user_id] ?: 0) : '#'}}" class="{{ $collection->user->name ? '' : 'link-disabled'}}"> {{$collection->user->name ?? tr('n_a')}}</a></td>
+                                        </tr> 
+                                        <tr>
+                                            <th>{{ tr('name') }}</th>
+                                            <td>{{ $collection->name ?: tr('na')}}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{{ tr('amount') }}</th>
+                                            <td>{{ $collection->amount ? formatted_amount($collection->amount) : 0.00}}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{{tr('status')}}</th>
+                                            <td>
+                                               <span class="btn {{ $collection->status ? 'btn-success' : 'btn-danger'}} btn-sm">{{$collection->status ? tr('approved') : tr('declined')}}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>{{tr('created_at')}} </th>
+                                            <td>{{common_date($collection->created_at , Auth::guard('admin')->user()->timezone)}}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{{tr('updated_at')}} </th>
+                                            <td>{{common_date($collection->updated_at , Auth::guard('admin')->user()->timezone)}}</td>
+                                        </tr> 
+                                    </table>
                                 </div>
-                        
                             </div>
+                    
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-     <div class="row">
+    </div>
+
+    @if($collection->collectionFiles->isNotEmpty())
+        <div class="row">
             <div class="col-xl-12 col-lg-12">
                 <div class="card user-profile-view-sec">
                     <div class="card-header border-bottom border-gray">
@@ -101,5 +103,7 @@
                     </div>
                 </div>
             </div>
-     </section>
+        </div>
+    @endif
+</section>
 @endsection

@@ -18,7 +18,7 @@ use Carbon\Carbon;
 
 use Excel;
 
-use App\Models\{ChatMessage, User, Admin, ChatUser, ChatAsset};
+use App\Models\{ChatMessage, User, Admin, ChatUser, ChatAsset, CustomTip};
 
 use App\Exports\LiveVideoPaymentExport;
 
@@ -537,5 +537,314 @@ class AdminLiveVideoController extends Controller
 
             return redirect()->back()->with('flash_error', $e->getMessage());
         }
+    }
+
+    /**
+     * @method custom_tips_index()
+     *
+     * @uses To list out custom_tips details 
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param 
+     * 
+     * @return return view page
+     *
+     */
+    public function custom_tips_index(Request $request) {
+
+        $base_query = CustomTip::orderBy('updated_at','desc');
+
+        $search_key = $request->search_key;
+
+        if($request->search_key) {
+
+            $base_query = $base_query->where('name','LIKE','%'.$search_key.'%');
+        }
+
+        $custom_tips = $base_query->paginate($this->take);
+
+        return view('admin.custom_tips.index')
+                ->with('page', 'custom_tips')
+                ->with('sub_page' , 'custom_tips-view')
+                ->with('custom_tips' , $custom_tips);
+    }
+
+    /**
+     * @method custom_tips_create()
+     *
+     * @uses To create category details
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param 
+     * 
+     * @return return view page
+     *
+     */
+    public function custom_tips_create() {
+
+        $custom_tip = new CustomTip;
+
+        return view('admin.custom_tips.create')
+                ->with('page', 'custom_tips')
+                ->with('sub_page', 'custom_tips-create')
+                ->with('custom_tip', $custom_tip);           
+    }
+
+    /**
+     * @method custom_tips_edit()
+     *
+     * @uses To display and update category details based on the sub category id
+     *
+     * @created
+     *
+     * @updated
+     *
+     * @param object $request - CustomTip Id 
+     * 
+     * @return redirect view page 
+     *
+     */
+    public function custom_tips_edit(Request $request) {
+
+        try {
+
+            $custom_tip = CustomTip::find($request->custom_tip_id);
+
+            if(!$custom_tip) { 
+
+                throw new Exception(tr('custom_tip_not_found'), 101);
+            }
+
+            return view('admin.custom_tips.edit')
+                ->with('page' , 'custom_tips')
+                ->with('sub_page', 'custom_tips-view')
+                ->with('custom_tip', $custom_tip); 
+            
+        } catch(Exception $e) {
+
+            return redirect()->route('admin.custom_tips.index')->with('flash_error', $e->getMessage());
+        }
+    
+    }
+
+    /**
+     * @method custom_tips_save()
+     *
+     * @uses To save the sub category details of new/existing sub category object based on details
+     *
+     * @created Akshata
+     *
+     * @updated Jeevan
+     *
+     * @param object request - CustomTip Form Data
+     *
+     * @return success message
+     *
+     */
+    public function custom_tips_save(Request $request) {
+        
+        try {
+            
+            DB::begintransaction();
+
+            $rules = [
+                'title' => 'required|max:191',
+                'picture' => 'mimes:jpg,png,jpeg',
+                'discription' => 'max:199',
+                'amount' => 'required|numeric'
+            ];
+
+            Helper::custom_validator($request->all(),$rules);
+
+            $custom_tip = CustomTip::find($request->custom_tip_id) ?? new CustomTip;
+
+            if($custom_tip->id) {
+
+                $message = tr('custom_tip_updated_success'); 
+
+            } else {
+
+                $message = tr('custom_tip_created_success');
+
+            }
+
+            $custom_tip->title = $request->title ?: $custom_tip->title;
+
+            $custom_tip->description = $request->description ?: '';
+
+            $custom_tip->amount = $request->amount ?: $custom_tip->amount;
+
+            // Upload picture
+            
+            if($request->hasFile('picture')) {
+
+                if($request->custom_tip_id) {
+
+                    Helper::storage_delete_file($custom_tip->picture, CATEGORY_FILE_PATH); 
+                    // Delete the old pic
+                }
+
+                $custom_tip->picture = Helper::storage_upload_file($request->file('picture'), CATEGORY_FILE_PATH);
+            }
+
+            if($custom_tip->save()) {
+
+                DB::commit(); 
+
+                return redirect(route('admin.custom_tips.view', ['custom_tip_id' => $custom_tip->id]))->with('flash_success', $message);
+
+            } 
+
+            throw new Exception(tr('custom_tip_save_failed'));
+            
+        } catch(Exception $e){ 
+
+            DB::rollback();
+
+            return redirect()->back()->withInput()->with('flash_error', $e->getMessage());
+
+        } 
+
+    }
+
+    /**
+     * @method custom_tips_view()
+     *
+     * @uses displays the specified category details based on category id
+     *
+     * @created Akshata 
+     *
+     * @updated 
+     *
+     * @param object $request - category Id
+     * 
+     * @return View page
+     *
+     */
+    public function custom_tips_view(Request $request) {
+       
+        try {
+      
+            $custom_tip = CustomTip::find($request->custom_tip_id);
+            
+            if(!$custom_tip) { 
+
+                throw new Exception(tr('custom_tip_not_found'), 101);                
+            }
+
+            return view('admin.custom_tips.view')
+                    ->with('page', 'custom_tips') 
+                    ->with('sub_page', 'custom_tips-view')
+                    ->with('custom_tip', $custom_tip);
+            
+        } catch (Exception $e) {
+
+            return redirect()->back()->with('flash_error', $e->getMessage());
+        }
+    
+    }
+
+    /**
+     * @method custom_tips_delete()
+     *
+     * @uses delete the sub category details based on category id
+     *
+     * @created Akshata 
+     *
+     * @updated  
+     *
+     * @param object $request - CustomTip Id
+     * 
+     * @return response of success/failure details with view page
+     *
+     */
+    public function custom_tips_delete(Request $request) {
+
+        try {
+
+            DB::begintransaction();
+
+            $custom_tip = CustomTip::find($request->custom_tip_id);
+            
+            if(!$custom_tip) {
+
+                throw new Exception(tr('custom_tip_not_found'), 101);                
+            }
+
+            if($custom_tip->delete()) {
+
+                DB::commit();
+
+                return redirect()->route('admin.custom_tips.index')->with('flash_success',tr('custom_tip_deleted_success'));   
+
+            } 
+            
+            throw new Exception(tr('custom_tip_delete_failed'));
+            
+        } catch(Exception $e){
+
+            DB::rollback();
+
+            return redirect()->back()->with('flash_error', $e->getMessage());
+
+        }       
+         
+    }
+
+    /**
+     * @method custom_tips_status
+     *
+     * @uses To update sub category status as DECLINED/APPROVED based on sub category id
+     *
+     * @created Akshata
+     *
+     * @updated 
+     *
+     * @param object $request - CustomTip Id
+     * 
+     * @return response success/failure message
+     *
+     **/
+    public function custom_tips_status(Request $request) {
+
+        try {
+
+            DB::beginTransaction();
+
+            $custom_tip = CustomTip::find($request->custom_tip_id);
+
+            if(!$custom_tip) {
+
+                throw new Exception(tr('custom_tip_not_found'), 101);
+                
+            }
+
+            $custom_tip->status = $custom_tip->status ? DECLINED : APPROVED ;
+
+            if($custom_tip->save()) {
+
+                DB::commit();
+
+                $message = $custom_tip->status ? tr('custom_tip_approve_success') : tr('custom_tip_decline_success');
+
+                return redirect()->back()->with('flash_success', $message);
+            }
+            
+            throw new Exception(tr('custom_tip_status_change_failed'));
+
+        } catch(Exception $e) {
+
+            DB::rollback();
+
+            return redirect()->route('admin.custom_tips.index')->with('flash_error', $e->getMessage());
+
+        }
+
     }
 }

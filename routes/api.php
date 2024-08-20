@@ -635,6 +635,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('recommended_live_videos', 'Api\LiveVideoApiController@recommended_live_videos');
 
+        Route::post('custom_tips', 'Api\LiveVideoApiController@custom_tips');
+
         // New Live Video Api's End
 
         Route::post('referral_code', 'Api\ReferralApiController@referral_code');

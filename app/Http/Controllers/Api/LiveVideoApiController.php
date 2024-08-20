@@ -22,11 +22,11 @@ use App\Models\User, App\Models\CategoryDetail;
 
 use App\Models\LiveVideo, App\Models\LiveVideoPayment, App\Models\Viewer;
 
-use App\Models\{ UserProduct, Follower, Post, PostFile };
+use App\Models\{ UserProduct, Follower, Post, PostFile, CustomTip};
 
 use Illuminate\Validation\Rule;
 
-use App\Http\Resources\{ UserPreviewResource };
+use App\Http\Resources\{ UserPreviewResource, CustomTipResource };
 
 use App\Repositories\ProductRepository;
 
@@ -1807,6 +1807,44 @@ $live_video->agora_token = $agora_configured ? ($token ?? '') : '';
         } catch (Exception $e) {
 
             DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /** 
+     * @method custom_tips()
+     *
+     * @uses To update the host id
+     *
+     * @created
+     *
+     * @updated 
+     *
+     * @param
+     * 
+     * @return JSON response
+     *
+     */
+    public function custom_tips(Request $request) {
+
+        try {
+
+            $rules = [
+                'type' => 'required|in:'.LIVE_VIDEO_PAYMENTS,
+            ];
+
+            Helper::custom_validator($request->all(), $rules, $custom_errors = []);
+
+            $base_query = CustomTip::Approved();
+
+            $data['total_custom_tips'] = $base_query->count();
+
+            $data['custom_tips'] = CustomTipResource::collection($base_query->get());
+
+            return $this->sendResponse("", "", $data);
+
+        } catch (Exception $e) {
 
             return $this->sendError($e->getMessage(), $e->getCode());
         }

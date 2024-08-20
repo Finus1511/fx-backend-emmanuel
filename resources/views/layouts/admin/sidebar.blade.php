@@ -190,6 +190,17 @@
             @if(Setting::get('is_one_to_one_call_enabled') || Setting::get('is_one_to_many_call_enabled'))
             <li class="header nav-small-cap">{{tr('video_management')}}</li>
             @if(Setting::get('is_one_to_many_call_enabled'))
+            <li class="treeview" id="custom_tips">
+                <a href="{{route('admin.custom_tips.index')}}">
+                    <i class="fa fa-list"></i>
+                    <span>{{tr('custom_tips')}}</span>
+                    <span class="pull-right-container"><i class="fa fa-angle-right pull-right"></i></span>
+                </a>
+                <ul class="treeview-menu">
+                    <li id="custom_tips-create"><a href="{{route('admin.custom_tips.create')}}">{{tr('add_custom_tip')}}</a></li>
+                    <li id="custom_tips-view"><a href="{{route('admin.custom_tips.index')}}"> {{tr('view_custom_tips')}}</a></li>
+                </ul>
+            </li>
             <li class="treeview" id="live-videos">
                 <a href="{{route('admin.live_videos.index')}}">
                     <i class="fa fa-video"></i>

@@ -317,6 +317,22 @@ Route::group(['middleware' => 'web'], function() {
 
         //product_sub_categories end
 
+        //custom_tips start
+        Route::get('custom_tips', 'Admin\AdminLiveVideoController@custom_tips_index')->name('custom_tips.index');
+
+        Route::get('custom_tips/create', 'Admin\AdminLiveVideoController@custom_tips_create')->name('custom_tips.create');
+
+        Route::get('custom_tips/edit', 'Admin\AdminLiveVideoController@custom_tips_edit')->name('custom_tips.edit');
+
+        Route::post('custom_tips/save', 'Admin\AdminLiveVideoController@custom_tips_save')->name('custom_tips.save');
+
+        Route::get('custom_tips/view', 'Admin\AdminLiveVideoController@custom_tips_view')->name('custom_tips.view');
+
+        Route::get('custom_tips/delete', 'Admin\AdminLiveVideoController@custom_tips_delete')->name('custom_tips.delete');
+
+        Route::get('custom_tips/status', 'Admin\AdminLiveVideoController@custom_tips_status')->name('custom_tips.status');
+        //custom_tips end
+
         // CC withdrawals start
 
         Route::get('user_withdrawals','Admin\AdminRevenueController@user_withdrawals')->name('user_withdrawals');
