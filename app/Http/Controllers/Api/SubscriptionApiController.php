@@ -53,19 +53,13 @@ class SubscriptionApiController extends Controller
 
         try {
 
-            $base_query = Subscription::where('subscriptions.status' , APPROVED);
+            $base_query = Subscription::where('subscriptions.status' , APPROVED)->where('user_id', $request->user_id);
 
-            $is_user_subscribed_free_plan = $this->loginUser->one_time_subscription ?? NO;
+            $data['total_subscriptions'] = $base_query->count();
 
-            if ($is_user_subscribed_free_plan) {
+            $data['subscriptions'] = $base_query->latest()->get();
 
-               $base_query->where('subscriptions.amount','>', 0);
-
-            }
-
-            $subscriptions = $base_query->orderBy('amount', 'asc')->get();
-
-            return $this->sendResponse($message = '' , $code = '', $subscriptions);
+            return $this->sendResponse($message = '' , $code = '', $data);
 
         } catch(Exception $e) {
 
@@ -101,6 +95,125 @@ class SubscriptionApiController extends Controller
             return $this->sendResponse($message = '' , $code = '', $subscription);
 
         } catch(Exception $e) {
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        
+        }
+    
+    }
+
+    /**
+     * @method subscriptions_store()
+     *
+     * @uses get the selected subscription details
+     *
+     * @created Bhawya N
+     *
+     * @updated Bhawya N
+     *
+     * @param integer $subscription_id
+     *
+     * @return JSON Response
+     */
+    public function subscriptions_store(Request $request) {
+
+        try {
+
+            DB::beginTransaction();
+
+            $rules = [
+                'subscription_id' => 'nullable|exists:subscriptions,id,user_id,'.$request->id,
+                'title'=>'required',
+                'description'=>'nullable',
+                'amount'=>'required|numeric',
+                'plan'=>'required|numeric|min:1',
+                'plan_type'=>'required|in:days,months,years',
+                'discount'=>'nullable',
+                'picture' => 'nullable|mimes:jpeg,jpg,gif,png,svg|exclude',
+            ];
+
+            $validated = Helper::custom_validator($request->all(), $rules, $custom_errors = []);
+
+            $subscription = Subscription::updateOrCreate(
+                ['id' => $request->subscription_id, 'user_id' => $request->id],
+                $validated
+            );
+
+            if($request->hasFile('picture')) {
+
+                $subscription->picture = Helper::storage_upload_file($request->file('picture') , PROFILE_PATH_USER);
+
+                $subscription->save();
+
+            }
+
+            $subscription->wasRecentlyCreated && User::where('id', $request->id)
+                    ->update([
+                        'user_account_type' => USER_PREMIUM_ACCOUNT, 
+                        'is_content_creator' => CONTENT_CREATOR, 
+                        'content_creator_step' => CONTENT_CREATOR_APPROVED
+                    ]);
+
+            DB::commit();
+
+            $code = $subscription->wasRecentlyCreated ? '258' : '259' ;
+
+            $data['subscription'] = $subscription->refresh();
+
+            return $this->sendResponse(api_success($code), $code, $data);
+
+        } catch(Exception $e) {
+
+            DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        
+        }
+    
+    }
+
+    /**
+     * @method subscriptions_delete()
+     *
+     * @uses get the selected subscription details
+     *
+     * @created Bhawya N
+     *
+     * @updated Bhawya N
+     *
+     * @param integer $subscription_id
+     *
+     * @return JSON Response
+     */
+    public function subscriptions_delete(Request $request) {
+
+        try {
+
+            DB::beginTransaction();
+
+            $rules = [
+                'subscription_id' => 'required|exists:subscriptions,id,user_id,'.$request->id
+            ];
+
+            $validated = Helper::custom_validator($request->all(), $rules, $custom_errors = []);
+
+            $subscription = Subscription::find($request->subscription_id);
+
+            if($subscription->delete()) {
+
+                DB::commit();
+
+                $data['subscription'] = $subscription;
+
+                return $this->sendResponse(api_success(260), 260, $data);
+
+            }
+
+            throw new Exception(api_error(336), 336);
+
+        } catch(Exception $e) {
+
+            DB::rollback();
 
             return $this->sendError($e->getMessage(), $e->getCode());
         
@@ -334,6 +447,115 @@ class SubscriptionApiController extends Controller
             $code = $user_subscription->is_cancelled == AUTORENEWAL_CANCELLED ? 120 : 119;
 
             return $this->sendResponse(api_success($code) , $code, $data);
+
+        } catch(Exception $e) {
+
+            DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+
+    }
+
+    /**
+     * @method user_subscriptions_payment_by_wallet()
+     * 
+     * @uses send money to other user
+     *
+     * @created Vithya R 
+     *
+     * @updated Vithya R
+     *
+     * @param object $request
+     *
+     * @return json with boolean output
+     */
+
+    public function subscriptions_payment_by_wallet(Request $request) {
+
+        try {
+            
+            DB::beginTransaction();
+
+            $rules = [
+                'subscription_id' => 'required|exists:subscriptions,id',
+                'promo_code'=>'nullable|exists:promo_codes,promo_code',
+            ];
+
+            Helper::custom_validator($request->all(), $rules, $custom_errors = []);
+
+            $user_subscription = Subscription::find($request->subscription_id);
+
+            if(!$user_subscription || $user_subscription->user_id == $request->id) {
+
+                throw new Exception(api_error(155), 155);   
+            }
+
+            $check_user_payment = \App\Models\UserSubscriptionPayment::UserPaid($request->id, $user_subscription->user_id)->first();
+
+            if($check_user_payment) {
+
+                throw new Exception(api_error(145), 145);
+                
+            }
+
+            $subscription_amount = $user_subscription->amount ?? 0;
+
+            $total = $subscription_amount ?? 0.00;
+
+            $user_pay_amount = Helper::apply_promo_code($request, $total, SUBSCRIPTION_PAYMENTS, $user_subscription->user_id);// Check the user has enough balance 
+
+            $user_wallet = \App\Models\UserWallet::where('user_id', $request->id)->first();
+
+            $remaining = $user_wallet->remaining ?? 0;
+
+            if(Setting::get('is_referral_enabled')) {
+
+                $remaining = $remaining + $user_wallet->referral_amount;
+                
+            }            
+
+            if($remaining < $user_pay_amount) {
+
+                throw new Exception(api_error(147), 147);
+            }
+            
+            $request->request->add([
+                'payment_mode' => PAYMENT_MODE_WALLET,
+                'total' => $subscription_amount, 
+                'user_pay_amount' => $user_pay_amount,
+                'paid_amount' => $user_pay_amount,
+                'payment_type' => WALLET_PAYMENT_TYPE_PAID,
+                'amount_type' => WALLET_AMOUNT_TYPE_MINUS,
+                'to_user_id' => $user_subscription->user_id,
+                'payment_id' => 'WPP-'.rand(),
+                'tokens' => $user_pay_amount,
+                'usage_type' => USAGE_TYPE_SUBSCRIPTION,
+                'promo_discount' => $total - $user_pay_amount
+            ]);
+
+            $wallet_payment_response = PaymentRepo::user_wallets_payment_save($request)->getData();
+
+            if($wallet_payment_response->success) {
+
+                $payment_response = PaymentRepo::user_subscription_payments_save($request, $user_subscription)->getData();
+
+                if(!$payment_response->success) {
+
+                    throw new Exception($payment_response->error, $payment_response->error_code);
+                }
+
+                DB::commit();
+
+                $code = $subscription_amount > 0 ? 140 : 235;
+
+                return $this->sendResponse(api_success($code), $code, $payment_response->data ?? []);
+
+            } else {
+
+                throw new Exception($wallet_payment_response->error, $wallet_payment_response->error_code);
+                
+            }
 
         } catch(Exception $e) {
 

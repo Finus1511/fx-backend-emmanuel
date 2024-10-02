@@ -2492,10 +2492,6 @@ class UserAccountApiController extends Controller
                 
                     $user->content_creator_step = CONTENT_CREATOR_BILLING_UPDATED;
 
-                    $user->is_content_creator = CONTENT_CREATOR;
-
-                    $user->content_creator_step = CONTENT_CREATOR_APPROVED;
-
                     $user->save();
                 }
 

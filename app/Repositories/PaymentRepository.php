@@ -1626,15 +1626,15 @@ class PaymentRepository {
 
         try {
 
-            $user = \App\Models\User::where('users.unique_id', $request->user_unique_id)->first();
+            $user = User::find($user_subscription->user_id);
 
             $previous_payment = \App\Models\UserSubscriptionPayment::where('from_user_id', $request->id)->where('to_user_id', $user_subscription->user_id)->where('is_current_subscription', YES)->first();
 
             $user_subscription_payment = new \App\Models\UserSubscriptionPayment;
 
-            $plan = 1;
+            $plan = $user_subscription->plan ?? 0;
 
-            $plan_type = $request->plan_type == PLAN_TYPE_YEAR ? 'years' : 'months';
+            $plan_type = $user_subscription->plan_type ?? 'months';
 
             $plan_formatted = $plan." ".$plan_type;
 
@@ -1643,6 +1643,7 @@ class PaymentRepository {
             if($previous_payment) {
 
                 if (strtotime($previous_payment->expiry_date) >= strtotime(date('Y-m-d H:i:s'))) {
+
                     $user_subscription_payment->expiry_date = date('Y-m-d H:i:s', strtotime("+{$plan_formatted}", strtotime($previous_payment->expiry_date)));
                 }
 
@@ -1673,7 +1674,7 @@ class PaymentRepository {
 
             $user_subscription_payment->plan = 1;
 
-            $user_subscription_payment->plan_type = $request->plan_type ?: PLAN_TYPE_MONTH;
+            $user_subscription_payment->plan_type = $user_subscription->plan_type ?: PLAN_TYPE_MONTH;
 
             $user_subscription_payment->cancel_reason = $request->cancel_reason ?? '';
 

@@ -250,6 +250,12 @@ return [
 
     257 => "The virtaul experience Ended!",
 
+    258 => "Subscription created successfully",
+
+    259 => "Subscription updated successfully",
+
+    260 => "Subscription deleted successfully",
+
     //Demo login success messages
 
     801 => 'Admin demo login credentials are already present',

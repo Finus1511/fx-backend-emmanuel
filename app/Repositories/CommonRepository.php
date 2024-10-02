@@ -240,78 +240,41 @@ class CommonRepository {
 
         $data['payment_text'] = "";
 
-        $data['unsubscribe_btn_status'] = NO;
-
-        $login_user = \App\Models\User::find($request->id);
+        $data['unsubscribe_btn_status'] = YES;
 
         // Check the user already following
-        $follower = \App\Models\Follower::where('status', YES)->where('follower_id', $request->id)->where('user_id', $other_user->user_id)->first();
 
         $chat_message_payment = ChatMessagePayment::firstWhere(['user_id' => $request->id, 'to_user_id' => $other_user->user_id]);
+
         $current_date = now();
+
         $data['user_needs_pay_chat_message'] = $chat_message_payment && !$current_date->isAfter($chat_message_payment->expiry_date) ? NO : YES;
 
-        if(!$follower) {
-
-            $data['is_user_needs_pay'] = YES;
-
-            $data['is_free_account'] =  NO;
-
-            $data['payment_text'] = tr('subscribe_for_free');
-
-        } else {
-
-            $data['unsubscribe_btn_status'] = YES;
-        }
 
         // Check the user has subscribed for this user plans
 
-        // $user_subscription = \App\Models\UserSubscription::where('user_id', $other_user->id)->first();
+        $user_subscription_payment = UserSubscriptionPayment::with(['subscription'])->where(['from_user_id' => $request->id, 'to_user_id' => $other_user->id])
+                                            ->where('is_current_subscription',YES)
+                                            ->whereDate('expiry_date','>=',$current_date)
+                                            ->first() ?? "";
 
-        $is_only_wallet_payment = Setting::get('is_only_wallet_payment');
+        if($user_subscription_payment) {
 
-        $user_subscription = \App\Models\UserSubscription::where('user_id', $other_user->id)
-            ->when($is_only_wallet_payment == NO, function ($q) use ($is_only_wallet_payment) {
-                return $q->OriginalResponse();
-            })
-            ->when($is_only_wallet_payment == YES, function($q) use ($is_only_wallet_payment) {
-                return $q->TokenResponse();
-            })->first();
+            $data['subscription_info'] = $user_subscription_payment->subscription ?? emptyObject();
 
-        $data['subscription_info'] = emptyObject();
-
-        if($user_subscription) {
-
-            $data['subscription_info'] = $user_subscription ?? emptyObject();
-
-            if($user_subscription->monthly_amount <= 0 && $user_subscription->yearly_amount <= 0) {
-
-                $data['is_free_account'] = YES;
-
-            } else {
-
-                $current_date = Carbon::now()->format('Y-m-d');
-
-                $check_user_subscription_payment = \App\Models\UserSubscriptionPayment::where('user_subscription_id', $user_subscription->id)->where('from_user_id', $request->id)
-                    ->where('is_current_subscription',YES)
-                    ->whereDate('expiry_date','>=',$current_date)
-                    ->where('to_user_id', $other_user->id)->count();
-
-                if(!$check_user_subscription_payment) {
-
-                    $data['is_user_needs_pay'] = YES;
-
-                    $data['payment_text'] = tr('unlock_subscription_text', $user_subscription->monthly_amount_formatted);
-
-                    $data['unsubscribe_btn_status'] = NO;
-
-                }
-
-            }
+            if (isset($user_subscription_payment->subscription) && ($user_subscription_payment->subscription->amount == 0 ?? 0)) {
+                 
+                 $data['is_free_account'] = YES;
+             }
 
         } else {
 
-            $data['is_free_account'] = YES;
+            $data['is_user_needs_pay'] = YES;
+
+            $data['payment_text'] = tr('subscription_text');
+
+            $data['unsubscribe_btn_status'] = NO;
+
         }
 
         return (object)$data;

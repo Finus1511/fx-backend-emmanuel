@@ -67,6 +67,11 @@ class UserSubscriptionPayment extends Model
     	return $this->belongsTo(User::class, 'to_user_id');
     }
 
+    public function subscription() {
+
+        return $this->belongsTo(Subscription::class, 'user_subscription_id');
+    }
+
     public function getPlanTextFormattedAttribute() {
 
         return plan_text($this->plan,$this->plan_type);
@@ -91,7 +96,11 @@ class UserSubscriptionPayment extends Model
      */
     public function scopeUserPaid($query, $from_user_id, $to_user_id) {
 
-        $query->where('user_subscription_payments.from_user_id', $from_user_id)->where('user_subscription_payments.to_user_id', $to_user_id)->where('user_subscription_payments.status', PAID)->where('is_current_subscription', YES);
+        $query->where('user_subscription_payments.from_user_id', $from_user_id)
+                ->where('user_subscription_payments.to_user_id', $to_user_id)
+                ->where('user_subscription_payments.status', PAID)
+                ->where('is_current_subscription', YES)
+                ->whereDate('expiry_date', '>=', now());
 
         return $query;
 

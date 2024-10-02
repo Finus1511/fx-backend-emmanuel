@@ -212,7 +212,13 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('subscriptions_view','Api\SubscriptionApiController@subscriptions_view');
 
+        Route::post('subscriptions_store','Api\SubscriptionApiController@subscriptions_store');
+
+        Route::post('subscriptions_delete','Api\SubscriptionApiController@subscriptions_delete');
+
         Route::post('subscriptions_payment_by_card','Api\SubscriptionApiController@subscriptions_payment_by_card');
+
+        Route::post('subscriptions_payment_by_wallet','Api\SubscriptionApiController@subscriptions_payment_by_wallet');
 
         Route::post('subscriptions_history','Api\SubscriptionApiController@subscriptions_history');
 

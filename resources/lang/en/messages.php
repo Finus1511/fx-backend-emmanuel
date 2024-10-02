@@ -1070,6 +1070,7 @@ return [
     "n_a" => "N/A",
     "unlock_post_text" => "UNLOCK POST FOR :other_key",
     "unlock_subscription_text" => "SUBSCRIBE FOR :other_key",
+    "subscription_text" => "SUBSCRIBE FOR Creator",
 	"subscribe_for_free" => "Subscribe for Free",
 	"add_post"=>"Add Post",
 	"post_files"=>"Post Files",

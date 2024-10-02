@@ -6,7 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
-    protected $appends = ['amount_formatted','plan_type_formatted'];
+
+    protected $guarded = ['id'];
+
+    protected $appends = ['subscription_id', 'subscription_unique_id', 'amount_formatted','plan_type_formatted'];
+
+    public function getSubscriptionIdAttribute() {
+
+        return $this->id;
+    }
+
+    public function getSubscriptionUniqueIdAttribute() {
+
+        return $this->unique_id;
+    }
 
     public function getAmountFormattedAttribute() {
 

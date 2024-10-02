@@ -446,4 +446,6 @@ return [
 
     335 => "You can pay after the subscription expires.!",
 
+    336 => "Subscription delete failed",
+
 ];
