@@ -1025,6 +1025,15 @@ function get_follower_ids($user_id) {
     return $follower_ids;
 }
 
+function get_favourite_ids($user_id) {
+
+    $favourite_ids = \App\Models\FavUser::where('user_id', $user_id)->where('status', YES)->pluck('fav_user_id');
+
+    $favourite_ids = $favourite_ids ? $favourite_ids->toArray() : [];
+
+    return $favourite_ids;
+}
+
 function get_post_temp_path($user_id, $url) {
 
     $filename = basename($url);

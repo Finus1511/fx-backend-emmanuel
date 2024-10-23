@@ -568,3 +568,7 @@ define('LAST_30_DAYS', 30);
 define('LAST_90_DAYS', 90);
 
 define('EXPIRY', 'expiry');
+
+define('PUBLISH_TYPE_ALL', 'all');
+define('PUBLISH_TYPE_FOLLOWERS', 'followers');
+define('PUBLISH_TYPE_FAVOURITES', 'favourites');

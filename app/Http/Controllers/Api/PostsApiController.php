@@ -64,12 +64,36 @@ class PostsApiController extends Controller
         try {
 
             $follower_ids = get_follower_ids($request->id);
+            
+            $favourite_ids = get_favourite_ids($request->id);
 
             $report_posts = report_posts($request->id);
 
             $blocked_users = blocked_users($request->id);
 
-            $base_query = $total_query = Post::Approved()->UserApproved()->whereNotIn('posts.user_id',$blocked_users)->whereNotIn('posts.id',$report_posts)->whereHas('user')->whereIn('posts.user_id', $follower_ids)->orderBy('posts.created_at', 'desc');
+            $base_query = $total_query = Post::Approved()->UserApproved()
+                                            ->whereNotIn('posts.user_id',$blocked_users)
+                                            ->whereNotIn('posts.id',$report_posts)
+                                            ->whereHas('user')
+                                            // ->whereIn('posts.user_id', $follower_ids)
+                                            ->where(function($query) use ($follower_ids, $favourite_ids) {
+                                                $query->where(function($subQuery) use ($follower_ids) {
+                                                          $subQuery->where('publish_type', PUBLISH_TYPE_FOLLOWERS)
+                                                                   ->whereIn('posts.user_id', $follower_ids); // Get followers' posts
+                                                      })
+                                                      ->orWhere(function($subQuery) use ($favourite_ids) {
+                                                          $subQuery->where('publish_type', PUBLISH_TYPE_FAVOURITES)
+                                                                   ->whereIn('posts.user_id', $favourite_ids); // Get favorited posts
+                                                      })
+                                                      ->orWhere(function($subQuery) use ($follower_ids, $favourite_ids) {
+                                                          $subQuery->where('publish_type', PUBLISH_TYPE_ALL)
+                                                                   ->where(function($innerQuery) use ($follower_ids, $favourite_ids) {
+                                                                       $innerQuery->whereIn('posts.user_id', $follower_ids)
+                                                                                  ->orWhereIn('posts.user_id', $favourite_ids);
+                                                                   }); // Get posts where either the user follows or has favorited
+                                                      });
+                                            })
+                                            ->orderBy('posts.created_at', 'desc');
 
             $data['total'] = $total_query->count() ?? 0;
 
@@ -331,6 +355,7 @@ class PostsApiController extends Controller
                 'post_file_id' => 'required',
                 // 'post_file_id' => 'required_if:post_files,id|exists:post_files,id',
                 'post_id' => 'nullable|exists:posts,id',
+                'publish_type' => 'required|in:'.PUBLISH_TYPE_ALL.','.PUBLISH_TYPE_FOLLOWERS.','.PUBLISH_TYPE_FAVOURITES,
             ];
 
             Helper::custom_validator($request->all(),$rules);
@@ -360,6 +385,8 @@ class PostsApiController extends Controller
             $success_code = $post->id ? 131 : 130;
 
             $post->user_id = $request->id;
+
+            $post->publish_type = $request->publish_type ?? PUBLISH_TYPE_ALL;
 
             $post->save();
 
@@ -456,6 +483,9 @@ class PostsApiController extends Controller
 
                             $post_file->preview_file = Helper::storage_upload_file($request->file('preview_file'), $folder_path) ?? Setting::get('ppv_image_placeholder');
 
+                        } else {
+
+                            $post_file->preview_file = Setting::get('ppv_image_placeholder');
                         }
 
                         if ($request->hasFile('video_preview_file')) {

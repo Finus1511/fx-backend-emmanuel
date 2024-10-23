@@ -6,7 +6,7 @@ use App\Helpers\Helper;
 
 use Log, Validator, Setting, Exception, DB;
 
-use App\Models\User, App\Vod, App\VodFile, App\Models\Category, App\Models\CategoryDetail;
+use App\Models\User, App\Vod, App\VodFile, App\Models\Category, App\Models\CategoryDetail, App\Models\Subscription;
 
 use Carbon\Carbon;
 
@@ -206,13 +206,15 @@ class PostRepository {
 
         $is_only_wallet_payment = Setting::get('is_only_wallet_payment');
 
-        $user_subscription = \App\Models\UserSubscription::where('user_id', $post_user->id)
-            ->when($is_only_wallet_payment == NO, function ($q) use ($is_only_wallet_payment) {
-                return $q->OriginalResponse();
-            })
-            ->when($is_only_wallet_payment == YES, function($q) use ($is_only_wallet_payment) {
-                return $q->TokenResponse();
-            })->first();
+        // $user_subscription = \App\Models\UserSubscription::where('user_id', $post_user->user_id)
+        //     ->when($is_only_wallet_payment == NO, function ($q) use ($is_only_wallet_payment) {
+        //         return $q->OriginalResponse();
+        //     })
+        //     ->when($is_only_wallet_payment == YES, function($q) use ($is_only_wallet_payment) {
+        //         return $q->TokenResponse();
+        //     })->first();
+
+        $user_subscription = Subscription::where('subscriptions.status' , APPROVED)->where('user_id', $post_user->user_id)->latest()->first();
 
         if(!$user_subscription) {
 
@@ -222,19 +224,16 @@ class PostRepository {
 
         }
 
-        $user_subscription_id = $user_subscription->id ?? 0;
-
-        if(!$post->is_paid_post && !$post->amount && $user_subscription) {
+        if($post->is_paid_post == 1 && $post->amount > 0) {
 
             // Check the user has subscribed for this post user plans
 
             $current_date = Carbon::now()->format('Y-m-d');
 
-            $check_user_subscription_payment = \App\Models\UserSubscriptionPayment::where('user_subscription_id', $user_subscription_id)
-                ->where('from_user_id', $request->id)
+            $check_user_subscription_payment = \App\Models\UserSubscriptionPayment::where('from_user_id', $request->id)
                 ->where('is_current_subscription',YES)
                 ->whereDate('expiry_date','>=', $current_date)
-                ->where('to_user_id', $post_user->id)
+                ->where('to_user_id', $post_user->user_id)
                 ->count();
             
             if(!$check_user_subscription_payment) {
