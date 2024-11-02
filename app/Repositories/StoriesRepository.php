@@ -49,7 +49,7 @@ class StoriesRepository {
 
             $user->share_link = Setting::get('frontend_url')."stories/".$user->story_unique_id;
 
-            $user->storyFiles = StoryFile::whereIn('story_id', $story_ids)->orderBy('story_files.id', 'desc')->get();
+            $user->storyFiles = StoryFile::whereIn('story_id', $story_ids)->where('created_at', '>=', Carbon::now()->subDay())->orderBy('story_files.id', 'desc')->get();
 
             return $user;
         });

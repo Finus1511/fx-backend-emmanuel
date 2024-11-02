@@ -10,7 +10,7 @@ class StoryFile extends Model
 {
     protected $hidden = ['id', 'unique_id'];
 
-    protected $appends = ['story_file_id', 'story_file_unique_id','updated'];
+    protected $appends = ['story_file_id', 'story_file_unique_id','updated','updated_string'];
     
     public function getStoryFileIdAttribute() {
 
@@ -25,6 +25,11 @@ class StoryFile extends Model
     public function getUpdatedAttribute() {
 
         return $this->updated_at->diffForHumans();
+    }
+
+    public function getUpdatedStringAttribute() {
+
+        return strtotime(str_replace('/', '-', $this->created_at));
     }
 
     /**
