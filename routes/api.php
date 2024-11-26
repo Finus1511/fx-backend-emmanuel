@@ -823,6 +823,66 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
             });
         });
 
+        Route::controller(Api\VirtualExperience\OneOnOneUserVirtualExperienceController::class)->group(function() {
+
+            Route::group(['prefix' => 'user_one_on_one_ve'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('virtual_experience_booking', 'virtual_experience_booking');
+
+            });
+
+            Route::group(['prefix' => 'user_one_on_one_ve_bookings'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('cancel', 'cancel');
+
+                Route::post('join', 'join');
+
+                Route::post('exit', 'exit');
+
+                Route::post('other_user_virtual_experience_list', 'other_user_virtual_experience_list');
+            });
+        });
+
+        Route::controller(Api\VirtualExperience\OneonOneCreatorVirtualExperienceController::class)->group(function() {
+
+            Route::group(['prefix' => 'one_on_one_ve'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('save', 'save');
+
+                Route::post('files', 'files');
+
+                Route::post('files_save', 'files_save');
+
+                Route::post('files_delete', 'files_delete');
+
+                Route::post('delete', 'delete');
+
+                Route::post('status', 'status');
+
+            });
+
+            Route::group(['prefix' => 'one_on_one_ve_bookings'], function() {
+
+                Route::post('bookings_list', 'bookings_list');
+
+                Route::post('bookings_view', 'bookings_view');
+
+                Route::post('bookings_cancel', 'bookings_cancel');
+            });
+        });
+
         Route::controller(Api\PersonalizedRequestController::class)->group(function() {
 
             Route::group(['prefix' => 'personalize_requests'], function() {

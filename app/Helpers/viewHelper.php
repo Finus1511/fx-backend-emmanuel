@@ -6,7 +6,7 @@ use Carbon\Carbon;
 
 use App\Models\{User, PageCounter, Settings, VirtualExperienceBooking, VirtualExperience, OrderProduct, OrderPayment, LssProductPayment, LiveStreamShopping};
 
-use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Collection, CollectionPayment};
+use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Collection, CollectionPayment, VeOneOnOne, VeOneOnOneBooking};
 
 use App\Repositories\CommonRepository as CommonRepo;
 
@@ -1905,3 +1905,21 @@ function collection_post_user_needs_to_pay($collection_id, $user_id) {
     return $is_user_needs_to_pay;
 }
 
+function virtual_experience_one_on_one_creator_check($virtual_experience_id, $user_id) {
+
+    $virtual_experience = VeOneOnOne::where(['id' => $virtual_experience_id, 'user_id' => $user_id])->first();
+
+    return $virtual_experience ? YES : NO;
+}
+
+function is_creator_needs_to_pay_for_one_on_one_ve($virtual_experience_id, $user_id) {
+
+     $virtual_experience_creator = virtual_experience_one_on_one_creator_check($virtual_experience_id, $user_id);
+
+    if(!$virtual_experience_creator){
+
+      $virtual_experience_payment = VeOneOnOneBooking::where(['ve_one_on_one_id' => $virtual_experience_id, 'user_id' => $user_id,  'status' => VIRTUAL_EXPERIENCE_PAID])->first();
+    }
+
+    return $virtual_experience_creator == YES ? NO : ($virtual_experience_payment ? NO : YES);
+}
