@@ -883,6 +883,74 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
             });
         });
 
+        Route::controller(Api\VirtualExperience\VipUserVirtualExperienceController::class)->group(function() {
+
+            Route::group(['prefix' => 'user_vip_ve'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('virtual_experience_booking', 'virtual_experience_booking');
+
+            });
+
+            Route::group(['prefix' => 'user_vip_ve_bookings'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('cancel', 'cancel');
+
+                Route::post('join', 'join');
+
+                Route::post('exit', 'exit');
+
+                Route::post('other_user_virtual_experience_list', 'other_user_virtual_experience_list');
+            });
+        });
+
+        Route::controller(Api\VirtualExperience\VipCreatorVirtualExperienceController::class)->group(function() {
+
+            Route::group(['prefix' => 'vip_ve'], function() {
+
+                Route::post('list', 'list');
+
+                Route::post('view', 'view');
+
+                Route::post('save', 'save');
+
+                Route::post('files', 'files');
+
+                Route::post('files_save', 'files_save');
+
+                Route::post('files_delete', 'files_delete');
+
+                Route::post('delete', 'delete');
+
+                Route::post('status', 'status');
+
+                Route::post('update_answer', 'update_answer');
+
+                Route::post('view_answer', 'view_answer');
+
+            });
+
+            Route::group(['prefix' => 'vip_ve_bookings'], function() {
+
+                Route::post('bookings_list', 'bookings_list');
+
+                Route::post('received_bookings_list', 'received_bookings_list');
+
+                Route::post('bookings_view', 'bookings_view');
+
+                Route::post('bookings_cancel', 'bookings_cancel');
+
+                Route::post('bookings_accept', 'bookings_accept');
+            });
+        });
+
         Route::controller(Api\PersonalizedRequestController::class)->group(function() {
 
             Route::group(['prefix' => 'personalize_requests'], function() {

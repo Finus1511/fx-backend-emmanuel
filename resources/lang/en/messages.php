@@ -2148,4 +2148,9 @@ return [
 	"custom_tip_decline_success" => "The Custom Tip declined successfully..!!",
 	"custom_tip_decline_confirmation" => "Do you want decline this Custom Tip?",
 	"custom_tip_status_change_failed" => "The Custom Tip status updating failed..!!",
+
+	"raised" => "Raised",
+	"accepted" => "Accepted",
+	"cancelled" => "Cancelled",
+	"paid" => "Paid",
 ];

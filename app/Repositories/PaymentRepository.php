@@ -3550,4 +3550,102 @@ class PaymentRepository {
         }
 
     }
+
+    /**
+     * @method user_wallets_payment_save()
+     *
+     * @uses used to save user wallet payment details
+     *
+     * @created vithya R
+     * 
+     * @updated vithya R
+     *
+     * @param object $request
+     *
+     * @return object $user_wallet_payment
+     */
+
+    public static function user_wallets_payment_to_other_save($request) {
+
+        try {
+
+            $user_wallet_payment = new \App\Models\UserWalletPayment;
+            
+            $user_wallet_payment->user_id = $request->user_id;
+
+            $user_wallet_payment->to_user_id = $request->to_user_id ?? 0;
+
+            $user_wallet_payment->received_from_user_id = $request->received_from_user_id ?? 0;
+
+            $user_wallet_payment->user_billing_account_id = $request->user_billing_account_id ?: 0;
+            
+            $user_wallet_payment->payment_id = $request->payment_id ?:generate_payment_id();
+
+            $user_wallet_payment->paid_amount = $user_wallet_payment->requested_amount = $request->paid_amount ?? 0.00;
+
+            $user_wallet_payment->admin_amount = $request->admin_amount ?? 0.00;
+
+            $user_wallet_payment->user_amount = $request->user_pay_amount ?? 0.00;
+
+            $user_wallet_payment->promo_code = $request->promo_code ?? NULL;
+
+            $user_wallet_payment->promo_discount = $request->promo_discount ?? 0.00;
+ 
+            $user_wallet_payment->payment_type = $request->payment_type ?: WALLET_PAYMENT_TYPE_ADD;
+
+            $user_wallet_payment->amount_type = $request->amount_type ?: WALLET_AMOUNT_TYPE_ADD;
+
+            $user_wallet_payment->usage_type = $request->usage_type ?: "";
+
+            $user_wallet_payment->currency = Setting::get('currency') ?? "$";
+
+            $user_wallet_payment->payment_mode = $request->payment_mode ?? PAYMENT_MODE_WALLET;
+
+            $user_wallet_payment->paid_date = date('Y-m-d H:i:s');
+
+            $user_wallet_payment->token = $request->tokens ?? 0;
+
+            $user_wallet_payment->status = isset($request->paid_status) ? $request->paid_status : USER_WALLET_PAYMENT_PAID;
+
+            $user_wallet_payment->admin_token = $request->admin_token ?? 0.00;
+
+            $user_wallet_payment->user_token = $request->user_token ?? 0.00;
+
+            if($request->file('bank_statement_picture')) {
+
+                $user_wallet_payment->bank_statement_picture = Helper::storage_upload_file($request->file('bank_statement_picture'));
+            }
+
+            $user_wallet_payment->message = "";
+
+            $user_wallet_payment->save();
+
+            $message = strtoupper($request->usage_type)." - " ?: "";
+
+            $message .= get_wallet_message($user_wallet_payment);
+
+            $message .= $request->message ? " - ".$request->message : "";
+
+            $user_wallet_payment->message = $message;
+
+            $user_wallet_payment->save();
+
+            if($user_wallet_payment->payment_type != WALLET_PAYMENT_TYPE_WITHDRAWAL && $user_wallet_payment->status == USER_WALLET_PAYMENT_PAID) {
+
+                self::user_wallet_update($user_wallet_payment);
+            }
+
+            $response = ['success' => true, 'message' => 'paid', 'data' => $user_wallet_payment];
+
+            return response()->json($response, 200);
+
+        } catch(Exception $e) {
+
+            $response = ['success' => false, 'error' => $e->getMessage(), 'error_code' => $e->getCode()];
+
+            return response()->json($response, 200);
+
+        }
+    
+    }
 }

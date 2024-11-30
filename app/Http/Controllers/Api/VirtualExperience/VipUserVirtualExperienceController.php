@@ -12,15 +12,15 @@ use App\Helpers\Helper;
 
 use Illuminate\Validation\Rule;
 
-use App\Models\{User, VeOneOnOne, UserWallet, VeOneOnOneBooking};
+use App\Models\{User, UserWallet, VeVip, VeVipBooking};
 
 use Carbon\Carbon;
 
 use App\Repositories\PaymentRepository as PaymentRepo;
 
-use App\Http\Resources\{VeOneonOneResource, VeOneOnOneBookingsResource};
+use App\Http\Resources\{VeVipResource, VeVipBookingsResource};
 
-class OneOnOneUserVirtualExperienceController extends Controller
+class VipUserVirtualExperienceController extends Controller
 {
     protected $loginUser, $skip, $take;
 
@@ -62,7 +62,7 @@ class OneOnOneUserVirtualExperienceController extends Controller
         
         try {
 
-             $base_query = VeOneOnOne::where('user_id', $request->id)->when($request->filled('status'), function ($query) use ($request) {
+             $base_query = VeVip::where('user_id', $request->id)->when($request->filled('status'), function ($query) use ($request) {
                              $query->where('status', $request->status);
                         })->when($request->filled('search_key'), function ($query) use ($request) {
                             $query->where(function ($query) use ($request) {
@@ -79,7 +79,7 @@ class OneOnOneUserVirtualExperienceController extends Controller
 
             $virtual_experiences = $base_query->latest()->skip($this->skip)->take($this->take)->get();
 
-            $data['virtual_experiences'] = VeOneOnOneResource::collection($virtual_experiences);
+            $data['virtual_experiences'] = VeVipResource::collection($virtual_experiences);
 
             return $this->sendResponse($message = "", $code = "", $data);
 
@@ -108,11 +108,11 @@ class OneOnOneUserVirtualExperienceController extends Controller
         
         try {
 
-             $virtual_experience = VeOneOnOne::where(['unique_id' => $request->virtual_experience_unique_id])->first();
+             $virtual_experience = VeVip::where(['unique_id' => $request->virtual_experience_unique_id])->first();
 
             throw_if(!$virtual_experience, new Exception(api_error(269), 269));
 
-            $data['virtual_experience'] = new VeOneOnOneResource($virtual_experience);
+            $data['virtual_experience'] = new VeVipResource($virtual_experience);
 
             return $this->sendResponse('', '', $data);
 
@@ -150,7 +150,8 @@ class OneOnOneUserVirtualExperienceController extends Controller
 
             throw_if(!$user, new Exception(api_error(135), 135));
 
-            $base_query = VeOneOnOne::where('user_id', $user->id)
+            $base_query = VeVip::where(['user_id' => $user->id, 'status' => VIP_VE_SCHEDULED])
+                ->whereDate('scheduled_date', '>=', now()->addDay()->toDateString())
                 ->orderBy('created_at', 'desc')
                 ->when($request->filled('status'), function ($query) use ($request) {
                              $query->where('status', $request->status);
@@ -169,7 +170,7 @@ class OneOnOneUserVirtualExperienceController extends Controller
 
             $virtual_experiences = $base_query->skip($this->skip)->take($this->take)->get();
 
-            $data['virtual_experiences'] = VeOneOnOneResource::collection($virtual_experiences);
+            $data['virtual_experiences'] = VeVipResource::collection($virtual_experiences);
 
             return $this->sendResponse($message = '' , $code = '', $data);
 
@@ -200,18 +201,18 @@ class OneOnOneUserVirtualExperienceController extends Controller
             DB::beginTransaction();
 
             $rules = [
-                'virtual_experience_id' => 'required|exists:ve_one_on_ones,id',
+                'virtual_experience_id' => 'required|exists:ve_vips,id',
             ];
 
             $custom_errors = ['virtual_experience_id' => api_error(139)];
 
             Helper::custom_validator($request->all(), $rules, $custom_errors);
 
-            $virtual_experience = VeOneOnOne::find($request->virtual_experience_id);
+            $virtual_experience = VeVip::find($request->virtual_experience_id);
 
             throw_if(!$virtual_experience, new Exception(api_error(135), 135));
 
-            $virtual_experience_payment = VeOneOnOneBooking::where(['ve_one_on_one_id' => $request->virtual_experience_id, 'user_id' => $request->id, 'status' => VIRTUAL_EXPERIENCE_PAID])->first();
+            $virtual_experience_payment = VeVipBooking::where(['ve_vip_id' => $request->virtual_experience_id, 'status' => VIP_VE_PAID])->first();
 
             throw_if($virtual_experience_payment, new Exception(api_error(279), 279));
 
@@ -240,7 +241,6 @@ class OneOnOneUserVirtualExperienceController extends Controller
 
             $wallet_payment_response = PaymentRepo::user_wallets_payment_save($request)->getData();
 
-
             if($wallet_payment_response->success) {
 
                 $request->merge([
@@ -252,27 +252,18 @@ class OneOnOneUserVirtualExperienceController extends Controller
 
                 $wallet_payment_response = PaymentRepo::user_wallets_payment_to_other_save($request)->getData();
 
-                $booking_data = [
-                    've_one_on_one_id' => $virtual_experience->id,
-                    've_one_on_one_user_id' => $virtual_experience->user_id,
-                    'user_id' => $request->id,
-                    'amount' => $virtual_experience->amount,
-                    'payment_mode' => PAYMENT_MODE_WALLET,
-                    'total' => $virtual_experience_amount, 
-                    'payment_id' => 'WPP-'.rand(),
-                    'status' => VIRTUAL_EXPERIENCE_PAID,
-                ];
+                VeVipBooking::where(['ve_vip_id' => $virtual_experience->ve_vip_id, 'user_id' => $request->id])->update(['status' => VIP_VE_PAID, 'paid_date' => now()]);
 
-                $virtual_experience_booking =VeOneOnOneBooking::create($booking_data);
+            } else {
 
-                } else {
+                throw new Exception($wallet_payment_response->error, $wallet_payment_response->error_code);
+            }
 
-                    throw new Exception($wallet_payment_response->error, $wallet_payment_response->error_code);
-                }
+            $virtual_experience->update(['status' => VIP_VE_BOOKED]);
 
-                $virtual_experience->refresh();
+            $virtual_experience->refresh();
 
-               $data['virtual_experience'] = new VeOneOnOneResource($virtual_experience);
+            $data['virtual_experience'] = new VeVipResource($virtual_experience);
 
             DB::commit();
 

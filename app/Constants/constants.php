@@ -572,3 +572,11 @@ define('EXPIRY', 'expiry');
 define('PUBLISH_TYPE_ALL', 'all');
 define('PUBLISH_TYPE_FOLLOWERS', 'followers');
 define('PUBLISH_TYPE_FAVOURITES', 'favourites');
+
+define('VIP_VE_RAISED', 1);
+define('VIP_VE_ACCEPTED', 2);
+define('VIP_VE_CANCELED', 3);
+define('VIP_VE_PAID', 4);
+
+define('VIP_VE_SCHEDULED', 1);
+define('VIP_VE_BOOKED', 2);

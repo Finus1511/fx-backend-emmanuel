@@ -6,7 +6,7 @@ use Carbon\Carbon;
 
 use App\Models\{User, PageCounter, Settings, VirtualExperienceBooking, VirtualExperience, OrderProduct, OrderPayment, LssProductPayment, LiveStreamShopping};
 
-use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Collection, CollectionPayment, VeOneOnOne, VeOneOnOneBooking};
+use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Collection, CollectionPayment, VeOneOnOne, VeOneOnOneBooking, VeVip, VeVipBooking};
 
 use App\Repositories\CommonRepository as CommonRepo;
 
@@ -1922,4 +1922,35 @@ function is_creator_needs_to_pay_for_one_on_one_ve($virtual_experience_id, $user
     }
 
     return $virtual_experience_creator == YES ? NO : ($virtual_experience_payment ? NO : YES);
+}
+
+function virtual_experience_vip_creator_check($virtual_experience_id, $user_id) {
+
+    $virtual_experience = VeVip::where(['id' => $virtual_experience_id, 'user_id' => $user_id])->first();
+
+    return $virtual_experience ? YES : NO;
+}
+
+function is_creator_needs_to_pay_for_vip_ve($virtual_experience_id, $user_id) {
+
+     $virtual_experience_creator = virtual_experience_vip_creator_check($virtual_experience_id, $user_id);
+
+    if(!$virtual_experience_creator){
+
+      $virtual_experience_payment = VeVipBooking::where(['ve_vip_id' => $virtual_experience_id, 'user_id' => $user_id,  'status' => VIRTUAL_EXPERIENCE_PAID])->first();
+    }
+
+    return $virtual_experience_creator == YES ? NO : ($virtual_experience_payment ? NO : YES);
+}
+
+function ve_vip_booking_status_formatted($status) {
+
+    $status_list = [
+        VIP_VE_RAISED => tr('raised'), 
+        VIP_VE_ACCEPTED => tr('accepted'),
+        VIP_VE_CANCELED => tr('cancelled'), 
+        VIP_VE_PAID => tr('paid')
+    ];
+
+    return isset($status_list[$status]) ? $status_list[$status] : tr('raised');
 }

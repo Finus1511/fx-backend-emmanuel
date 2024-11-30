@@ -256,6 +256,8 @@ return [
 
     260 => "Subscription deleted successfully",
 
+    261 => "Answer submitted successfully.",
+
     //Demo login success messages
 
     801 => 'Admin demo login credentials are already present',

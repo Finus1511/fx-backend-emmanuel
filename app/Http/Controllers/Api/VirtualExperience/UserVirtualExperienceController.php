@@ -252,7 +252,16 @@ class UserVirtualExperienceController extends Controller
 
             if($wallet_payment_response->success) {
 
-                    $booking_data = [
+                $request->merge([
+                    'user_id' => $virtual_experience->user_id,
+                    'to_user_id' => $request->id,
+                    'amount_type' => WALLET_AMOUNT_TYPE_ADD,
+                    'payment_id' => 'WPP-'.rand()
+                ]);
+
+                $wallet_payment_response = PaymentRepo::user_wallets_payment_to_other_save($request)->getData();
+
+                $booking_data = [
                     'virtual_experience_id' => $virtual_experience->id,
                     'virtual_experience_user_id' => $virtual_experience->user_id,
                     'user_id' => $request->id,

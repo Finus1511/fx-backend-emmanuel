@@ -448,4 +448,8 @@ return [
 
     336 => "Subscription delete failed",
 
+    337 => "Please fill all the fields.",
+
+    338 => 'The virtaul experience is not eligible to accept',
+
 ];
