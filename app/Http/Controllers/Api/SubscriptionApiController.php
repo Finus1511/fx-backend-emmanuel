@@ -10,7 +10,7 @@ use App\Helpers\Helper;
 
 use DB, Log, Hash, Validator, Exception, Setting;
 
-use App\Models\User, App\Models\Subscription, App\Models\SubscriptionPayment;
+use App\Models\{User, Subscription, SubscriptionPayment, Community, CommunityUser};
 
 use App\Repositories\PaymentRepository as PaymentRepo;
 
@@ -152,6 +152,15 @@ class SubscriptionApiController extends Controller
                         'user_account_type' => USER_PREMIUM_ACCOUNT, 
                         'is_content_creator' => CONTENT_CREATOR, 
                         'content_creator_step' => CONTENT_CREATOR_APPROVED
+                    ]);
+
+            $community = Community::firstOrCreate([
+                'user_id' => $request->id
+            ]);
+
+            $community->wasRecentlyCreated && CommunityUser::create([
+                        'community_id' => $community->id,
+                        'user_id' => $request->id
                     ]);
 
             DB::commit();
@@ -543,6 +552,13 @@ class SubscriptionApiController extends Controller
                 if(!$payment_response->success) {
 
                     throw new Exception($payment_response->error, $payment_response->error_code);
+                }
+
+                $community = Community::where('user_id', $user_subscription->user_id)->first();
+
+                if ($community) {
+                    
+                    CommunityUser::firstOrCreate(['community_id' => $community->id, 'user_id' => $request->id]);
                 }
 
                 DB::commit();

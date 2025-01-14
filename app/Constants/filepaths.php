@@ -62,3 +62,5 @@ define('COLLECTION_FILE_PATH', 'uploads/collections/');
 define('COLLECTION_FOLDER_PATH', 'uploads/collection_folders/');
 
 define('THUMBNAIL_FILE_PATH', 'public/uploads/thumbnails/');
+
+define('COMMUNITY_FILE_PATH', 'uploads/community/');

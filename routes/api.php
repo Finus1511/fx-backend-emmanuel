@@ -51,6 +51,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
     Route::post('username_validation','Api\UserAccountApiController@username_validation');
 
     Route::any('chat_messages_save', 'ApplicationController@chat_messages_save');
+    
+    Route::any('community_chat_messages_save', 'ApplicationController@community_chat_messages_save');
 
     Route::any('live_stream_messages_save', 'ApplicationController@live_stream_messages_save');
 
@@ -546,6 +548,20 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
         Route::post('report_posts_save','Api\PostsApiController@report_posts_save');
 
         Route::post('report_posts','Api\PostsApiController@report_posts');
+
+        //Community
+
+        Route::post('user_communities','Api\CommunityApiController@user_communities');
+
+        Route::post('community_messages_index','Api\CommunityApiController@community_messages_index');
+
+        Route::post('user_community_assets', 'Api\CommunityApiController@user_community_assets');
+
+        Route::post('community_asset_files_upload', 'Api\CommunityApiController@community_asset_files_upload');
+
+        Route::post('community_message_delete', 'Api\CommunityApiController@community_message_delete');
+
+        Route::post('update_community', 'Api\CommunityApiController@update_community');
 
 
         Route::post('user_subscriptions_payment_by_paypal','Api\UserAccountApiController@user_subscriptions_payment_by_paypal');

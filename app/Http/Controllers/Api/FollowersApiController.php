@@ -12,7 +12,7 @@ use App\Jobs\FollowUserJob;
 
 use DB, Log, Hash, Validator, Exception, Setting;
 
-use App\Models\{User, Follower, ChatMessagePayment};
+use App\Models\{User, Follower, ChatMessagePayment, Community, CommunityUser};
 
 class FollowersApiController extends Controller
 {
@@ -288,6 +288,13 @@ class FollowersApiController extends Controller
                 $user_subscription_payment->cancel_reason = 'unfollowed';
 
                 $user_subscription_payment->save();
+
+                $community = Community::where('user_id', $user_subscription_payment->to_user_id)->first();
+
+                if($community) {
+
+                    CommunityUser::where(['community_id' => $community->id, 'user_id' => $user_subscription_payment->from_user_id])->delete();
+                }
             }
 
             DB::commit();
@@ -447,7 +454,7 @@ class FollowersApiController extends Controller
 
                 $current_date = now();
 
-                $chat_user->is_user_needs_pay = $to_user ? ($chat_message_payment && $chat_message_payment->expiry_date && !$current_date->isAfter($chat_message_payment->expiry_date && $to_user->chat_message_amount == 0) ? NO : YES) :  NO;
+                $chat_user->is_user_needs_pay = $to_user ? ($chat_message_payment && $chat_message_payment->expiry_date && !$current_date->isAfter($chat_message_payment->expiry_date) && $to_user->chat_message_amount == 0 ? NO : YES) :  NO;
 
                 $chat_user->file_type = $chat_messages->file_type ?? FILE_TYPE_TEXT;  
 

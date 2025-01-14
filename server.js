@@ -226,6 +226,63 @@ io.on('connection', function (socket) {
 
     });
 
+    socket.on('community_message', function(data) {
+
+        console.log("send community message Start");
+
+        console.log("ON community message", data);
+
+        url = chat_save_url+'api/user/community_chat_messages_save?from_user_id='+data.from_user_id
+        +'&community_id='+data.community_id
+        +'&message='+data.message
+        +'&chat_asset_id='+data.chat_asset_id
+        +'&file_type='+data.file_type
+        +'&reference_id='+data.chat_message_reference_id;
+
+        const encodedURI = encodeURI(url);
+
+        console.log('url', url);
+
+        request.get(encodedURI, function (error, response, body) {
+
+            if(body && body != undefined){
+
+                const res_data = JSON.parse(body);
+
+                if(res_data.data && res_data.data != undefined){
+
+                    let updateData = data;
+
+                    console.log(res_data.data);
+
+                    data.room = socket.handshake.query.room;
+
+                    console.log("receiver",data.room);
+
+                    socket.broadcast.to(data.room).emit('community_message', res_data.data);
+
+                }
+            }
+
+        });
+
+        console.log("send message END");
+
+    });
+
+    socket.on('community message delete', function(data) {
+
+        console.log("delete message Start");
+
+        console.log("ON Delete", data);
+
+        data.room = socket.handshake.query.room;
+
+        socket.broadcast.to(data.room).emit('community message delete', data);
+
+        console.log("delete message END");
+
+    });
 
     socket.on('delete', function(data) {
 

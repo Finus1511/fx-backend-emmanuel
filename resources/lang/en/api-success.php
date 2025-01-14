@@ -258,6 +258,8 @@ return [
 
     261 => "Answer submitted successfully.",
 
+    262 => 'Community details updated successfully',
+
     //Demo login success messages
 
     801 => 'Admin demo login credentials are already present',

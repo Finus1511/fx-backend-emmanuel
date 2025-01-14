@@ -8,7 +8,7 @@ use Log, Validator, Setting, Exception, DB;
 
 use Carbon\Carbon;
 
-use App\Models\{User, Post, UserSubscriptionPayment, UserWallet,PostLike, UserTip, PostPayment, UserCategory, Follower, UserPromoCode, ChatUser, ChatMessagePayment, UserLoginSession};
+use App\Models\{User, Post, UserSubscriptionPayment, UserWallet,PostLike, UserTip, PostPayment, UserCategory, Follower, UserPromoCode, ChatUser, ChatMessagePayment, UserLoginSession, CommunityAsset};
 
 use App\Jobs\ReportJob;
 
@@ -1233,6 +1233,96 @@ class CommonRepository {
         $file_archive->save();
 
         return $file_archive;
+
+    }
+
+    /**
+     * @method community_messages_response()
+     *
+     * @uses Format the post response
+     *
+     * @created vithya R
+     *
+     * @updated vithya R
+     *
+     * @param object $request
+     *
+     * @return object $payment_details
+     */
+
+    public static function community_messages_response($chat_messages, $request) {
+
+        $chat_messages = $chat_messages->map(function ($chat_message, $key) use ($request) {
+
+            if ($chat_message->created_at->isToday()) {
+
+                $chat_message->created = common_date($chat_message->created_at, $request->timezone, 'h:i A');
+
+            } else {
+                $chat_message->created = common_date($chat_message->created_at, $request->timezone, 'd M Y');
+            }
+
+            $chat_message->date_formatted = common_date($chat_message->created_at, $request->timezone, 'd M Y');
+
+            $chat_message->time_formatted = common_date($chat_message->created_at, $request->timezone, 'h:i A');
+
+            if($chat_message->is_file_uploaded) {
+
+                $chat_assets = CommunityAsset::where('community_message_id', $chat_message->id)->get();
+
+                $chat_message->chat_assets = $chat_assets ?? [];
+
+            }
+
+            return $chat_message;
+
+        });
+
+        return $chat_messages;
+
+    }
+
+    /**
+     * @method community_assets_list_response()
+     *
+     * @uses Format the chat response
+     *
+     * @created Bhawya N
+     *
+     * @updated Bhawya N
+     *
+     * @param object $request
+     *
+     * @return object $payment_details
+     */
+
+    public static function community_assets_list_response($chat_assets, $request) {
+
+        $chat_assets = $chat_assets->map(function ($chat_asset, $key) use ($request) {
+
+            if ($chat_asset->created_at->isToday()) {
+
+                $chat_asset->created = common_date($chat_asset->created_at, $request->timezone, 'h:i A');
+
+            } else {
+                $chat_asset->created = common_date($chat_asset->created_at, $request->timezone, 'd M Y');
+            }
+
+            $chat_asset->date_formatted = common_date($chat_asset->created_at, $request->timezone, 'd M Y');
+
+            $chat_asset->time_formatted = common_date($chat_asset->created_at, $request->timezone, 'h:i A');
+
+            $chat_asset->asset_file = $chat_asset->file;
+
+            $chat_asset->is_user_paid = 1;
+            
+            $chat_asset->amount = 0;
+
+            return $chat_asset;
+
+        });
+
+        return $chat_assets;
 
     }
 }

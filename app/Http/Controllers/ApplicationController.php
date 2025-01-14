@@ -14,11 +14,13 @@ use App\Models\SubscriptionPayment;
 
 use App\Models\User;
 
-use App\Models\{Subscription, ChatAsset};
+use App\Models\{Subscription, ChatAsset, CommunityMessage, CommunityAsset};
 
 use App\Http\Resources\LiveVideoChatMessageResource;
 
 use App\Repositories\PaymentRepository as PaymentRepo;
+
+use App\Repositories\CommonRepository as CommonRepo;
 
 class ApplicationController extends Controller
 {
@@ -936,6 +938,86 @@ class ApplicationController extends Controller
             return $this->sendResponse("", "", $data);
 
         } catch(Exception $e) {
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+
+    }
+
+    /**
+     * @method community_chat_messages_save()
+     *
+     * @uses - To save the chat message.
+     *
+     * @created vidhya R
+     *
+     * @updated vidhya R
+     *
+     * @param
+     *
+     * @return No return response.
+     *
+     */
+
+     public function community_chat_messages_save(Request $request) {
+
+        try {
+
+            Log::info("message_save".print_r($request->all() , true));
+
+            DB::beginTransaction();
+
+            $rules = [
+                'from_user_id' => 'required|exists:users,id',
+                'community_id' => 'required|exists:communities,id',
+            ];
+
+            Helper::custom_validator($request->all(),$rules);
+
+            $message = $request->message;
+
+
+            $chat_message = CommunityMessage::create([
+                'from_user_id' => $request->from_user_id,
+                'community_id' => $request->community_id,
+                'message' => $request->message ?? "",
+                'reference_id' => $request->reference_id,
+                'file_type' => $request->file_type ?? FILE_TYPE_TEXT,
+            ]);
+
+            if ($chat_message) {
+
+                info("chat_asset_id: ".$request->chat_asset_id);
+
+                if($request->chat_asset_id != '' && $request->chat_asset_id != null && $request->chat_asset_id != "undefined") {
+
+                    $chat_asset_file_ids = explode(',',$request->chat_asset_id);
+
+                    foreach($chat_asset_file_ids as $chat_asset_file_id) {
+
+                        info("chat_message_id: ".$chat_message->id);
+
+                        $chat_asset = CommunityAsset::where('id', $chat_asset_file_id)->update(['community_message_id' => $chat_message->id]);
+                    }
+
+                    $chat_message->is_file_uploaded = YES;
+
+                    $chat_message->save();
+
+                    $chat_message->chat_assets = CommunityAsset::whereIn('id', $chat_asset_file_ids)->get();
+
+                }
+            }
+
+            DB::commit();
+
+            return $this->sendResponse("", "", $chat_message);
+
+        } catch(Exception $e) {
+
+            DB::rollback();
+
+            info("Error ". $e->getMessage());
 
             return $this->sendError($e->getMessage(), $e->getCode());
         }
