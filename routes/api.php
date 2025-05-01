@@ -95,6 +95,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
     Route::post('featured_users_list', 'Api\UserAccountApiController@featured_users_list');
 
+    Route::post('featured_stories', 'Api\UserAccountApiController@featured_stories');
+
     Route::group(['middleware' => 'UserApiVal'] , function() {
 
         Route::post('two_step_auth_login', 'Api\UserAccountApiController@two_step_auth_login');

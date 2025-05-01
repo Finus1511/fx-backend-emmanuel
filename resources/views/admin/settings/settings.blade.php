@@ -1016,6 +1016,22 @@ hr {
                             </div>
                         </div>
 
+                        <div class="col-md-12">
+
+                            <h5 class="settings-sub-header text-uppercase text-danger"><b>{{tr('twitter_settings')}}</b></h5>
+
+                            <hr>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="TWITTER_CLIENT_ID">{{tr('TWITTER_CLIENT_ID')}} *</label>
+
+                                <input type="text" class="form-control" name="TWITTER_CLIENT_ID" id="TWITTER_CLIENT_ID" placeholder="Enter {{tr('TWITTER_CLIENT_ID')}}" value="{{old('TWITTER_CLIENT_ID') ?: Setting::get('TWITTER_CLIENT_ID') }}">
+                            </div>
+                        </div>
+
                     </div>
                 
                 </div>

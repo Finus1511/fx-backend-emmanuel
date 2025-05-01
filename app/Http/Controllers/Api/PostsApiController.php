@@ -71,29 +71,66 @@ class PostsApiController extends Controller
 
             $blocked_users = blocked_users($request->id);
 
-            $base_query = $total_query = Post::Approved()->UserApproved()
-                                            ->whereNotIn('posts.user_id',$blocked_users)
-                                            ->whereNotIn('posts.id',$report_posts)
-                                            ->whereHas('user')
-                                            // ->whereIn('posts.user_id', $follower_ids)
-                                            ->where(function($query) use ($follower_ids, $favourite_ids) {
-                                                $query->where(function($subQuery) use ($follower_ids) {
-                                                          $subQuery->where('publish_type', PUBLISH_TYPE_FOLLOWERS)
-                                                                   ->whereIn('posts.user_id', $follower_ids); // Get followers' posts
-                                                      })
-                                                      ->orWhere(function($subQuery) use ($favourite_ids) {
-                                                          $subQuery->where('publish_type', PUBLISH_TYPE_FAVOURITES)
-                                                                   ->whereIn('posts.user_id', $favourite_ids); // Get favorited posts
-                                                      })
-                                                      ->orWhere(function($subQuery) use ($follower_ids, $favourite_ids) {
-                                                          $subQuery->where('publish_type', PUBLISH_TYPE_ALL)
-                                                                   ->where(function($innerQuery) use ($follower_ids, $favourite_ids) {
-                                                                       $innerQuery->whereIn('posts.user_id', $follower_ids)
-                                                                                  ->orWhereIn('posts.user_id', $favourite_ids);
-                                                                   }); // Get posts where either the user follows or has favorited
-                                                      });
-                                            })
-                                            ->orderBy('posts.created_at', 'desc');
+            $publishType = $request->publish_type ?? null; // Get publish_type from request, if available
+
+            $base_query = $total_query = Post::Approved()
+                ->UserApproved()
+                ->whereNotIn('posts.user_id', $blocked_users)
+                ->whereNotIn('posts.id', $report_posts)
+                ->whereHas('user')
+                ->where(function($query) use ($follower_ids, $favourite_ids, $publishType) {
+                    if ($publishType == PUBLISH_TYPE_FAVOURITES) {
+                        $query->where('publish_type', PUBLISH_TYPE_FAVOURITES)
+                              ->whereIn('posts.user_id', $favourite_ids);
+                    } else if ($publishType == PUBLISH_TYPE_FOLLOWERS) {
+                        $query->where('publish_type', PUBLISH_TYPE_FOLLOWERS)
+                              ->whereIn('posts.user_id', $follower_ids);
+                    } else {
+                        // Default fallback if publishType is not provided or not matched
+                        $query->where(function($subQuery) use ($follower_ids, $favourite_ids) {
+                            $subQuery->where(function($inner) use ($follower_ids) {
+                                    $inner->where('publish_type', PUBLISH_TYPE_FOLLOWERS)
+                                          ->whereIn('posts.user_id', $follower_ids);
+                                })
+                                ->orWhere(function($inner) use ($favourite_ids) {
+                                    $inner->where('publish_type', PUBLISH_TYPE_FAVOURITES)
+                                          ->whereIn('posts.user_id', $favourite_ids);
+                                })
+                                ->orWhere(function($inner) use ($follower_ids, $favourite_ids) {
+                                    $inner->where('publish_type', PUBLISH_TYPE_ALL)
+                                          ->where(function($q) use ($follower_ids, $favourite_ids) {
+                                              $q->whereIn('posts.user_id', $follower_ids)
+                                                ->orWhereIn('posts.user_id', $favourite_ids);
+                                          });
+                                });
+                        });
+                    }
+                })
+                ->orderBy('posts.created_at', 'desc');
+
+            // $base_query = $total_query = Post::Approved()->UserApproved()
+            //                                 ->whereNotIn('posts.user_id',$blocked_users)
+            //                                 ->whereNotIn('posts.id',$report_posts)
+            //                                 ->whereHas('user')
+            //                                 // ->whereIn('posts.user_id', $follower_ids)
+            //                                 ->where(function($query) use ($follower_ids, $favourite_ids) {
+            //                                     $query->where(function($subQuery) use ($follower_ids) {
+            //                                               $subQuery->where('publish_type', PUBLISH_TYPE_FOLLOWERS)
+            //                                                        ->whereIn('posts.user_id', $follower_ids); // Get followers' posts
+            //                                           })
+            //                                           ->orWhere(function($subQuery) use ($favourite_ids) {
+            //                                               $subQuery->where('publish_type', PUBLISH_TYPE_FAVOURITES)
+            //                                                        ->whereIn('posts.user_id', $favourite_ids); // Get favorited posts
+            //                                           })
+            //                                           ->orWhere(function($subQuery) use ($follower_ids, $favourite_ids) {
+            //                                               $subQuery->where('publish_type', PUBLISH_TYPE_ALL)
+            //                                                        ->where(function($innerQuery) use ($follower_ids, $favourite_ids) {
+            //                                                            $innerQuery->whereIn('posts.user_id', $follower_ids)
+            //                                                                       ->orWhereIn('posts.user_id', $favourite_ids);
+            //                                                        }); // Get posts where either the user follows or has favorited
+            //                                           });
+            //                                 })
+            //                                 ->orderBy('posts.created_at', 'desc');
 
             $data['total'] = $total_query->count() ?? 0;
 

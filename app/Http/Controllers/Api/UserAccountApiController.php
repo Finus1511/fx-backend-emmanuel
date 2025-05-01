@@ -351,14 +351,14 @@ class UserAccountApiController extends Controller
             $rules = [
                 'device_type' => 'required|in:'.DEVICE_ANDROID.','.DEVICE_IOS.','.DEVICE_WEB,
                 'device_token' => '',
-                'login_by' => 'required|in:manual,facebook,google,apple,linkedin,instagram',
+                'login_by' => 'required|in:manual,facebook,google,apple,linkedin,instagram,twitter',
                 'device_model' => 'nullable',
                 // 'device_unique_id' => 'required',
             ];
 
             Helper::custom_validator($request->all(), $rules);
 
-            $allowed_social_logins = ['facebook', 'google', 'apple', 'linkedin', 'instagram'];
+            $allowed_social_logins = ['facebook', 'google', 'apple', 'linkedin', 'instagram', 'twitter'];
 
             if(in_array($request->login_by, $allowed_social_logins)) {
 
@@ -678,7 +678,7 @@ class UserAccountApiController extends Controller
             $rules = [
                 'device_token' => 'nullable',
                 'device_type' => 'required|in:'.DEVICE_ANDROID.','.DEVICE_IOS.','.DEVICE_WEB,
-                'login_by' => 'required|in:manual,facebook,google,apple,linkedin,instagram',
+                'login_by' => 'required|in:manual,facebook,google,apple,linkedin,instagram,twitter',
                 'device_model' => 'nullable',
                 // 'device_unique_id' => 'required',
             ];
@@ -4393,36 +4393,56 @@ class UserAccountApiController extends Controller
      */
     public function update_show_followings(Request $request) {
 
-    try {
+        try {
 
-        DB::beginTransaction();
-        
-        $user = User::find($request->id);
+            DB::beginTransaction();
+            
+            $user = User::find($request->id);
 
-        throw_if(!$user, new Exception(api_error(135), 135));
+            throw_if(!$user, new Exception(api_error(135), 135));
 
-        $result = $user->update(['show_followings' => !$user->show_followings]);
+            $result = $user->update(['show_followings' => !$user->show_followings]);
 
-        if ($result) {
+            if ($result) {
 
-            DB::commit();
+                DB::commit();
 
-            $code = $user->show_followings ? 815 : 816;
+                $code = $user->show_followings ? 815 : 816;
 
-            $data['show_fans_follwings'] = $user->show_followings ? YES : NO;
+                $data['show_fans_follwings'] = $user->show_followings ? YES : NO;
 
-            return $this->sendResponse(api_success($code), $code, $data);
+                return $this->sendResponse(api_success($code), $code, $data);
+            }
+
+            throw new Exception(tr('show_followings_fans_update_failed'));
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
         }
 
-        throw new Exception(tr('show_followings_fans_update_failed'));
-
-    } catch (Exception $e) {
-
-        DB::rollback();
-
-        return $this->sendError($e->getMessage(), $e->getCode());
     }
 
- }
+    public function featured_stories(Request $request)
+    {
+        try {
+
+            $base_query = User::where('featured_story', '!=', "");
+
+            $data['total'] = $base_query->count();
+
+            $featured_users = $base_query->latest()->skip($this->skip)->take($this->take)->get();
+
+            $data['featured_stories'] = $featured_users;
+
+            return $this->sendResponse('', '', $data);
+
+        } catch (Exception $e) {
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+    }
 
 }

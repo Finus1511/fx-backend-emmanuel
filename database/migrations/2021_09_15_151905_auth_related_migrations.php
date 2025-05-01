@@ -42,7 +42,7 @@ class AuthRelatedMigrations extends Migration
                 $table->string('token_expiry');
                 $table->string('device_token')->nullable();
                 $table->enum('device_type', ['web', 'android', 'ios'])->default('web');
-                $table->enum('login_by', ['manual','facebook','google', 'instagram', 'apple', 'linkedin'])->default('manual');
+                $table->enum('login_by', ['manual','facebook','google', 'instagram', 'apple', 'linkedin', 'twitter'])->default('manual');
                 $table->string('social_unique_id')->default('');
                 $table->tinyInteger('registration_steps')->default(0);
                 $table->tinyInteger('is_push_notification')->default(YES);
