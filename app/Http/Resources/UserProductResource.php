@@ -18,19 +18,27 @@ class UserProductResource extends JsonResource
         
         return [
 
+            'add_to_cart' => $this->add_to_cart ?? YES,
             'user_product_id' => $this->id,
             'user_product_unique_id' => $this->unique_id,
             'user_id' => $this->user_id,
+            'user' => [
+                'name' => $this->user->name,
+                'username' => $this->user->username,
+                'picture' => $this->user->picture,
+            ],
             'product_category_id' => $this->product_category_id,
             'product_sub_category_id' => $this->product_sub_category_id,
             'name' => $this->name ?: '',
             'product_category' => $this->whenLoaded('productCategory'),
             'product_sub_category' => $this->whenLoaded('productSubCategory'),
+            'userProductPictures' => $this->whenLoaded('userProductPictures'),
             'description' => $this->description ?: '',
             'picture' => $this->picture ?: asset('images/placeholder.jpeg'),
             'quantity' => $this->quantity ?: 0,
             'token' => $this->token ?: 0.00,
             'price' => $this->price ?: 0.00,
+            'price_formatted' => formatted_amount($this->price ?: 0.00),
             'delivery_price' => $this->delivery_price ?: 0.00,
             'is_outofstock' => $this->is_outofstock ? tr('yes') :tr('no'),
             'is_visible' => $this->is_visible ? tr('yes') :tr('no'),

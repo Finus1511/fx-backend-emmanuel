@@ -144,17 +144,12 @@ class UserVirtualExperienceController extends Controller
         try {
 
             $rules = [
-                    'user_unique_id' => 'required|exists:users,unique_id'
+                    'user_unique_id' => 'nullable|exists:users,unique_id'
                     ];
 
             Helper::custom_validator($request->all(), $rules);
 
-            $user = User::firstWhere('unique_id', $request->user_unique_id);
-
-            throw_if(!$user, new Exception(api_error(135), 135));
-
-            $base_query = VirtualExperience::where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
+            $base_query = VirtualExperience::where('user_id', '!=', $request->id)->orderBy('created_at', 'desc')
                 ->when($request->filled('status'), function ($query) use ($request) {
                              $query->where('status', $request->status);
                         })->when($request->filled('search_key'), function ($query) use ($request) {
@@ -168,6 +163,15 @@ class UserVirtualExperienceController extends Controller
                                 });
                             });
                         });
+
+            if ($request->user_unique_id) {
+
+                $user = User::firstWhere('unique_id', $request->user_unique_id);
+
+                throw_if(!$user, new Exception(api_error(135), 135));
+
+                $base_query = $base_query->where('user_id', $user->id);
+            }
 
             $data['total'] = $base_query->count() ?? 0;
 

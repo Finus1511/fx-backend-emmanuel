@@ -230,6 +230,16 @@ class UserProductApiController extends Controller
 
             }
 
+            if ($request->product_category_id) {
+                
+                $base_query = $base_query->where('product_category_id',$request->product_category_id);
+            }
+
+            if ($request->product_sub_category_id) {
+                
+                $base_query = $base_query->where('product_sub_category_id',$request->product_sub_category_id);
+            }
+
             if ($request->filled('sort_by')) {
                 
                 $sort_by = $request->sort_by == 'price_hl' ? 'desc' : 'asc';
@@ -1009,6 +1019,21 @@ class UserProductApiController extends Controller
             $base_query = $total_query = Cart::where('user_id', $request->id)->whereHas('user_product')->with('user_product');
 
             $carts = $base_query->skip($this->skip)->take($this->take)->orderBy('created_at', 'desc')->get();
+
+            $carts = $carts->map(function ($cart, $key) use ($request) {
+
+                        $user = User::find($cart->user_product->user_id ?? 0);
+
+                        info($cart->user_product);
+
+                        $cart->user = $user ? [
+                            "name" => $user->name,
+                            "username" => $user->username,
+                            "picture" => $user->picture,
+                        ] : emptyObject();
+
+                        return $cart;
+                    });
 
             $sub_total = Cart::where('user_id', $request->id)->sum('sub_total');
 
