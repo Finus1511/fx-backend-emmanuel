@@ -141,16 +141,13 @@ class VipUserVirtualExperienceController extends Controller
         try {
 
             $rules = [
-                    'user_unique_id' => 'required|exists:users,unique_id'
+                    'user_unique_id' => 'nullable|exists:users,unique_id'
                     ];
 
             Helper::custom_validator($request->all(), $rules);
 
-            $user = User::firstWhere('unique_id', $request->user_unique_id);
-
-            throw_if(!$user, new Exception(api_error(135), 135));
-
-            $base_query = VeVip::where(['user_id' => $user->id, 'status' => VIP_VE_SCHEDULED])
+            $base_query = VeVip::where(['status' => VIP_VE_SCHEDULED])
+                ->where('user_id', '!=', $request->id)
                 ->whereDate('scheduled_date', '>=', now()->addDay()->toDateString())
                 ->orderBy('created_at', 'desc')
                 ->when($request->filled('status'), function ($query) use ($request) {
@@ -165,6 +162,15 @@ class VipUserVirtualExperienceController extends Controller
                                 });
                             });
                         });
+
+            if ($request->user_unique_id) {
+
+                $user = User::firstWhere('unique_id', $request->user_unique_id);
+
+                throw_if(!$user, new Exception(api_error(135), 135));
+
+                $base_query = $base_query->where('user_id', $user->id);
+            }
 
             $data['total'] = $base_query->count() ?? 0;
 
