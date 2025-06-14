@@ -149,7 +149,7 @@ class LiveVideoApiController extends Controller
             
             // Validation end
 
-            $base_query = LiveVideo::CurrentLive()->where('unique_id',$request->live_video_unique_id);
+            $base_query = LiveVideo::where('unique_id',$request->live_video_unique_id);
 
             // this function has all common check conditions for videos
             $base_query = LiveVideoRepo::live_videos_common_query($request, $base_query);
@@ -1370,7 +1370,7 @@ $live_video->agora_token = $agora_configured ? ($token ?? '') : '';
             
             // Validation end
 
-            $live_video = LiveVideo::CurrentLive()->where('unique_id', $request->live_video_unique_id)->first();
+            $live_video = LiveVideo::where('unique_id', $request->live_video_unique_id)->first();
 
             if(!$live_video) {
 

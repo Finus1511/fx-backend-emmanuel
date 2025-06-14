@@ -1530,7 +1530,7 @@ class PaymentRepository {
                 self::tips_payment_wallet_update($request, $user_tip);
             }
             
-            $response = ['success' => true, 'message' => 'paid', 'data' => [ 'payment_id' => $request->payment_id]];
+            $response = ['success' => true, 'message' => 'paid', 'data' => [ 'payment_id' => $request->payment_id, 'amount' => formatted_amount($request->paid_amount)]];
 
             return response()->json($response, 200);
 

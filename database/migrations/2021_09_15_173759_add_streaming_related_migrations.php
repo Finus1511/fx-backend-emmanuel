@@ -139,7 +139,8 @@ class AddStreamingRelatedMigrations extends Migration
                 $table->id();
                 $table->string('unique_id')->default(rand());
                 $table->integer('from_user_id');
-                $table->string('live_stream_shopping_unique_id');
+                $table->string('live_stream_shopping_unique_id')->nullable();
+                $table->string('live_video_id')->nullable();
                 $table->text('message')->nullable();
                 $table->tinyInteger('status')->default(0);
                 $table->timestamps();

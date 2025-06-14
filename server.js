@@ -159,6 +159,19 @@ io.on('connection', function (socket) {
         });
     });
 
+    socket.on('pay_live_video', function(data) {
+
+        console.log("pay_live_video START");
+
+        console.log('pay_live_video', data);
+
+        var receiver = "user_id_"+data.live_video_unique_id+"_live_video_unique_id";
+
+        console.log('receiver', receiver);
+
+        socket.broadcast.to(receiver).emit('pay_live_video', data);
+    });
+
     socket.on('message', function(data) {
 
         console.log("send message Start");

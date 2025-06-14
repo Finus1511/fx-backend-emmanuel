@@ -777,6 +777,8 @@ class ApplicationController extends Controller
 
             $chat_message->message = $request->message;
 
+            $chat_message->status = APPROVED;
+
             $chat_message->save();
 
             DB::commit();
