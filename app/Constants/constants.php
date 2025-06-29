@@ -34,6 +34,7 @@ if(!defined('DEFAULT_TRUE')) define('DEFAULT_TRUE', true);
 if(!defined('DEFAULT_FALSE')) define('DEFAULT_FALSE', false);
 
 if(!defined('ADMIN')) define('ADMIN', 'admin');
+if(!defined('SUB_ADMIN')) define('SUB_ADMIN', 'sub_admin');
 if(!defined('USER')) define('USER', 'user');
 if(!defined('ContentCreator')) define('ContentCreator', 'creator');
 

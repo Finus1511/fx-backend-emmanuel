@@ -685,6 +685,27 @@ Route::group(['middleware' => 'web'], function() {
         Route::get('collections/view', 'Admin\CollectionController@collections_view')->name('collections.view');
         Route::get('collection_file/delete', 'Admin\CollectionController@collection_file_delete')->name('collection_file.delete');
 
+
+        // Sub Admin CRUD Operations
+
+        Route::get('sub_admin', 'Admin\SubAdminController@sub_admin_index')->name('sub_admin.index');
+
+        Route::get('sub_admin/create', 'Admin\SubAdminController@sub_admin_create')->name('sub_admin.create');
+
+        Route::get('sub_admin/edit', 'Admin\SubAdminController@sub_admin_edit')->name('sub_admin.edit');
+
+        Route::post('sub_admin/save', 'Admin\SubAdminController@sub_admin_save')->name('sub_admin.save');
+
+        Route::get('sub_admin/view', 'Admin\SubAdminController@sub_admin_view')->name('sub_admin.view');
+
+        Route::get('sub_admin/delete', 'Admin\SubAdminController@sub_admin_delete')->name('sub_admin.delete');
+
+        Route::get('sub_admin/status', 'Admin\SubAdminController@sub_admin_status')->name('sub_admin.status');
+
+        Route::get('sub_admin/role_access', 'Admin\SubAdminController@sub_admin_role_access')->name('sub_admin.role_access');
+
+        Route::post('sub_admin/update_role_access', 'Admin\SubAdminController@sub_admin_update_role_access')->name('sub_admin.update_role_access');
+
     });
 
 

@@ -2153,4 +2153,29 @@ return [
 	"accepted" => "Accepted",
 	"cancelled" => "Cancelled",
 	"paid" => "Paid",
+
+	"sub_admins" => "Sub Admins",
+	"add_sub_admin" => "Add Sub Admin",
+	"view_sub_admins" => "View Sub Admins",
+	"view_sub_admin" => "View Sub Admin",
+	"edit_sub_admin" => "Edit Sub Admin",
+	"delete_sub_admin"	=>	"Delete Sub Admin",
+
+	"sub_admin_created_success" => "The Sub Admin created successfully..!!",
+	"sub_admin_updated_success" => "The Sub Admin updated successfully..!!",
+	"sub_admin_save_failed" => "The Sub Admin details updating failed!!",
+	"sub_admin_not_found" => "The selected Sub Admin details not found.",
+
+	"sub_admin_deleted_success" => "The Sub Admin deleted successfully..!!",
+	"sub_admin_delete_failed" => "The Sub Admin deletion failed!!",
+	"sub_admin_delete_confirmation" => "Once you've deleted the record , the Sub Admin (:other_key) will no longer be able to log in to the site or apps. This action cannot be undo.",
+
+	"sub_admin_approve_success" => "The Sub Admin approved successfully..!!",
+	"sub_admin_decline_success" => "The Sub Admin declined successfully..!!",
+	"sub_admin_decline_confirmation" => "Do you want decline this Sub Admin?",
+	"sub_admin_status_change_failed" => "The Sub Admin status updating failed..!!",
+
+	"sub_admins_search_placeholder" => "Search by Sub Admin Name & Email Id",
+	"role_access_update_success" => "Role Access Updates Successfully",
+	"role_access" => "Role Access"
 ];

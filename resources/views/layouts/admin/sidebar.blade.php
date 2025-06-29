@@ -29,7 +29,23 @@
             </li>
 
             <li class="nav-devider"></li>
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'account_management'))
             <li class="header nav-small-cap">{{tr('account_management')}}</li>
+            @if(Auth::guard('admin')->user()->role == ADMIN)
+            <li class="treeview" id="sub_admins">
+                <a href="{{route('admin.sub_admin.index')}}">
+                    <i class="fa fa-users"></i>
+                    <span>{{tr('sub_admins')}}</span>
+                    <span class="pull-right-container">
+                    <i class="fa fa-angle-right pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu">
+                    <li id="sub_admins-create"><a href="{{route('admin.sub_admin.create')}}">{{tr('add_sub_admin')}}</a></li>
+                    <li id="sub_admins-view"><a href="{{route('admin.sub_admin.index')}}">{{tr('view_sub_admins')}}</a></li>
+                </ul>
+            </li>
+            @endif
             <li class="treeview" id="users">
                 <a href="{{route('admin.users.index')}}">
                     <i class="fa fa-users"></i>
@@ -80,6 +96,8 @@
                 </ul>
             </li>
             <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'post_management'))
             <li class="header nav-small-cap">{{tr('post_management')}}</li>
             <li class="treeview" id="posts">
                 <a href="{{route('admin.posts.index')}}">
@@ -134,6 +152,9 @@
                   <li id="vods-view"><a href="{{route('admin.vod_videos.index')}}"> {{tr('view_vods')}}</a></li>
                 </ul>
                 </li> -->
+                <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'products_management'))
             <li class="header nav-small-cap">{{tr('products_management')}}</li>
             <li class="treeview" id="user_products">
                 <a href="{{route('admin.user_products.index')}}">
@@ -187,6 +208,9 @@
                   </ul>
                 
                 </li> -->
+                <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'video_management'))
             @if(Setting::get('is_one_to_one_call_enabled') || Setting::get('is_one_to_many_call_enabled'))
             <li class="header nav-small-cap">{{tr('video_management')}}</li>
             @if(Setting::get('is_one_to_many_call_enabled'))
@@ -248,12 +272,18 @@
                 <i class="fa fa-file"></i> <span>{{tr('collections')}}</span>
                 </a>
             </li>
+            <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'personalize_requests'))
             <li class="header nav-small-cap">{{tr('personalize_requests')}}</li>
             <li id="personalized_requests">
                 <a href="{{route('admin.personalized_requests.index')}}">
                 <i class="fa fa-exchange-alt"></i> <span>{{tr('personalize_requests')}}</span>
                 </a>
             </li>
+            <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'revenue_management'))
             <li class="header nav-small-cap">{{tr('revenue_management')}}</li>
             <li id="revenue-dashboard">
                 <a href="{{route('admin.revenues.dashboard')}}">
@@ -306,6 +336,9 @@
                 <i class="fa fa-location-arrow"></i> <span>{{tr('user_withdrawals')}}</span>
                 </a>
             </li>
+            <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'lookups_management'))
             <li class="header nav-small-cap">{{tr('lookups_management')}}</li>
             <li class="treeview" id="documents">
                 <a href="#">
@@ -353,6 +386,9 @@
                     <li id="report_reasons-view"><a href="{{route('admin.report_reasons.index')}}">{{tr('view_report_reasons')}}</a></li>
                 </ul>
             </li>
+            <li class="nav-devider"></li>
+            @endif
+            @if(Auth::guard('admin')->user()->role == ADMIN || str_contains(Auth::guard('admin')->user()->roles ?? '', 'setting_management'))
             <li class="header nav-small-cap">{{tr('setting_management')}}</li>
             <li id="settings">
                 <a href="{{route('admin.settings')}}">
@@ -369,6 +405,7 @@
                 <i class="fa fa-power-off"></i> <span>{{tr('logout')}}</span>
                 </a>
             </li>
+            @endif
         </ul>
     </section>
 </aside>
