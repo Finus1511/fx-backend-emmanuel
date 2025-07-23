@@ -64,6 +64,11 @@ class UserProduct extends Model
         return $this->hasMany(Cart::class,'user_product_id');
     }
 
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
     /**
      * Scope a query to only include active users.
      *

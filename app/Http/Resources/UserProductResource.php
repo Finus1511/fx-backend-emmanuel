@@ -33,6 +33,7 @@ class UserProductResource extends JsonResource
             'product_category' => $this->whenLoaded('productCategory'),
             'product_sub_category' => $this->whenLoaded('productSubCategory'),
             'userProductPictures' => $this->whenLoaded('userProductPictures'),
+            'variants' => $this->variants,
             'description' => $this->description ?: '',
             'picture' => $this->picture ?: asset('images/placeholder.jpeg'),
             'quantity' => $this->quantity ?: 0,

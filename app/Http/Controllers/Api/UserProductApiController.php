@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 
 use App\Http\Resources\UserProductResource;
 
-use App\Models\{User, UserProductPicture, UserProduct, Order, DeliveryAddress, UserWallet, UserWalletPayment};
+use App\Models\{User, UserProductPicture, UserProduct, Order, DeliveryAddress, UserWallet, UserWalletPayment, ProductVariant};
 
 use App\Models\Cart, App\Models\OrderProduct, App\Models\UserCard, App\Models\ProductSubCategory, App\Models\ProductCategory;
 
@@ -455,6 +455,22 @@ class UserProductApiController extends Controller
                 Helper::update_file_archive($archive_request);
 
                 // File Archive end
+
+                //Remove Old Variants
+
+                ProductVariant::where('user_product_id', $user_product->id)->delete();
+
+                //Store Variants
+
+                $variants = json_decode($request->variants, true);
+
+                foreach ($variants as $variant) {
+                    $user_product->variants()->create([
+                        'attributes' => json_encode($variant['attributes']), // { "color": "red", "size": "M" }
+                        'price' => $variant['price'],
+                        'stock' => $variant['stock'],
+                    ]);
+                }
 
                 DB::commit(); 
 
@@ -1016,7 +1032,9 @@ class UserProductApiController extends Controller
     {
         try {
 
-            $base_query = $total_query = Cart::where('user_id', $request->id)->whereHas('user_product')->with('user_product');
+            $base_query = $total_query = Cart::where('user_id', $request->id)
+                                            ->whereHas('user_product')
+                                            ->with(['user_product', 'product_variant']);
 
             $carts = $base_query->skip($this->skip)->take($this->take)->orderBy('created_at', 'desc')->get();
 
@@ -1081,6 +1099,7 @@ class UserProductApiController extends Controller
 
             $rules = [
                 'user_product_id' => 'required|exists:user_products,id',
+                'product_variant_id' => 'nullable|exists:product_variants,id',
                 'quantity' => 'required|max:100',
             ];
 
@@ -1116,6 +1135,13 @@ class UserProductApiController extends Controller
 
             $product_price = Setting::get('is_only_wallet_payment') ? $product->token : $product->price;
 
+            if ($request->product_variant_id) {
+                
+                $product_variant = ProductVariant::find($request->product_variant_id);
+
+                $product_price = $product_variant->price ?? $product_price;
+            }
+
             $cart = Cart::find($request->cart_id) ?? new Cart;
 
             $success_code = $cart->id ? 218 : 217;
@@ -1125,6 +1151,8 @@ class UserProductApiController extends Controller
             $cart->order_id = "";
 
             $cart->user_product_id = $request->user_product_id;
+
+            $cart->product_variant_id = $request->product_variant_id ?? 0;
 
             $cart->quantity = $request->quantity ?: $cart->quantity;
 
