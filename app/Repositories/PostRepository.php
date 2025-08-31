@@ -14,6 +14,8 @@ use App\Repositories\CommonRepository as CommonRepo;
 
 use App\Http\Resources\{ UserPreviewResource };
 
+use App\Models\{PollOption, PollVote};
+
 class PostRepository {
 
     /**
@@ -83,6 +85,10 @@ class PostRepository {
 
                         $post->publish_time_formatted = common_date($post->publish_time, $request->timezone, 'M d');
 
+                        $post->poll_options = PollOption::where('post_id', $post->id)->get();
+
+                        $post->selected_poll_option = PollVote::where(['post_id' => $post->id, 'user_id' => $request->id])->first()->poll_option_id ?? 0;
+
                         $post->unsetRelation('postLikes')->unsetRelation('postBookmarks');
 
 
@@ -130,6 +136,10 @@ class PostRepository {
                                 ->when($is_user_needs_pay == YES, function($q) use ($is_user_needs_pay) {
                                     return $q->BlurResponse();
                                 })->get();
+
+        $post->poll_options = PollOption::where('post_id', $post->id)->get();
+
+        $post->selected_poll_option = PollVote::where(['post_id' => $post->id, 'user_id' => $request->id])->first()->poll_option_id ?? 0;
 
         $liked_by = $post->postLikes->first();
 

@@ -311,6 +311,8 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
             Route::post('post_files_upload','Api\PostsApiController@post_files_upload');
 
             Route::post('post_files_remove','Api\PostsApiController@post_files_remove');
+            
+            Route::post('vote_poll','Api\PostsApiController@vote_poll');
 
             //stories
 

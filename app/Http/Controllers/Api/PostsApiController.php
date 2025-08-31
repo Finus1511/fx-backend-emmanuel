@@ -24,6 +24,8 @@ use App\Jobs\PostCommentLikeJob, App\Jobs\PostCommentReplyJob, App\Jobs\VideoThu
 
 use Carbon\Carbon;
 
+use App\Models\{PollOption, PollVote};
+
 class PostsApiController extends Controller
 {
     protected $loginUser;
@@ -386,17 +388,17 @@ class PostsApiController extends Controller
             
             $rules = [
                 'content' => 'required',
+                'post_type' => 'required|in:files,poll',
                 'publish_time' => 'nullable',
                 'amount' => 'nullable|numeric|min:1',
                 'post_files' => 'nullable',
-                'post_file_id' => 'required',
+                'post_file_id' => 'required_if:post_type,files',
                 // 'post_file_id' => 'required_if:post_files,id|exists:post_files,id',
                 'post_id' => 'nullable|exists:posts,id',
-                'publish_type' => 'required|in:'.PUBLISH_TYPE_ALL.','.PUBLISH_TYPE_FOLLOWERS.','.PUBLISH_TYPE_FAVOURITES,
+                'publish_type' => 'required_if:post_type,files|in:'.PUBLISH_TYPE_ALL.','.PUBLISH_TYPE_FOLLOWERS.','.PUBLISH_TYPE_FAVOURITES,
             ];
 
             Helper::custom_validator($request->all(),$rules);
-
 
             if(!$request->post_file_id) {
 
@@ -409,12 +411,11 @@ class PostsApiController extends Controller
             
             }
             
-
             $user = User::find($request->id);
 
             if(!$user->is_content_creator == CONTENT_CREATOR) {
 
-                    throw new Exception(api_error(218), 218);
+                throw new Exception(api_error(218), 218);
             }
 
             $post = Post::find($request->post_id) ?? new Post;
@@ -424,6 +425,8 @@ class PostsApiController extends Controller
             $post->user_id = $request->id;
 
             $post->publish_type = $request->publish_type ?? PUBLISH_TYPE_ALL;
+
+            $post->poll_question = $request->poll_question ?? null;
 
             $post->save();
 
@@ -597,6 +600,20 @@ class PostsApiController extends Controller
                         $post_category->save();
 
                     } 
+                }
+
+                PollOption::where('post_id', $post->id)->delete();
+
+                if ($request->poll_options) {
+
+                    $poll_options = explode(',', $request->poll_options);
+                    
+                    foreach ($poll_options as $opt) {
+                        PollOption::create([
+                            'post_id' => $post->id,
+                            'option_text' => $opt,
+                        ]);
+                    }
                 }
 
                 DB::commit();
@@ -3671,6 +3688,49 @@ class PostsApiController extends Controller
         }
 
     }
+
+    public function vote_poll(Request $request)
+    {
+        try {
+
+            $rules = [
+                'post_id' => 'required|exists:posts,id',
+                'poll_option_id' => 'required|exists:poll_options,id',
+            ];
+
+            Helper::custom_validator($request->all(), $rules);
+
+            $post = Post::find($request->post_id);
+
+            // Check if user already voted
+            $existingVote = PollVote::where('post_id', $post->id)
+                ->where('user_id', $request->id)
+                ->first();
+
+            if ($existingVote) {
+                throw new \Exception("You already voted", 400);
+            }
+
+            $vote = PollVote::create([
+                        'post_id' => $post->id,
+                        'poll_option_id' => $request->poll_option_id,
+                        'user_id' => $request->id,
+                    ]);
+
+            // Increment option count
+            PollOption::where('id', $request->poll_option_id)->increment('votes_count');
+
+            $data['poll_options'] = PollOption::where('post_id', $post->id)->get();
+            
+            $data['selected_poll_option'] = PollVote::where(['post_id' => $post->id, 'user_id' => $request->id])->first()->poll_option_id ?? 0;
+
+            return $this->sendResponse("Vote recorded successfully", 200, $data);
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), $e->getLine());
+        }
+    }
+
 
 
 }
