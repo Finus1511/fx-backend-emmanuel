@@ -133,6 +133,10 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
 
         Route::post('verified_badge_status', 'Api\UserAccountApiController@verified_badge_status');
 
+        Route::post('get_2fa_details', 'Api\UserAccountApiController@get_2fa_details');
+        
+        Route::post('enable_disable_2fa', 'Api\UserAccountApiController@enable_disable_2fa');
+
         // Cards management start
 
         Route::post('cards_add', 'Api\UserAccountApiController@cards_add');
@@ -243,6 +247,16 @@ Route::group(['prefix' => 'user' ,'as' => 'user.', 'middleware' => 'cors'], func
         Route::post('withdrawals_cancel_request','Api\WalletApiController@user_withdrawals_cancel_request');
 
         Route::post('withdrawals_check','Api\WalletApiController@user_withdrawals_check');
+
+        Route::controller(Api\DashboardController::class)->group(function() {
+
+            Route::post('chart', 'chart');
+
+            Route::post('dashboard_analytics', 'dashboard_analytics');
+
+            Route::post('best_selling_list', 'best_selling_list');
+
+        });
 
     });
 

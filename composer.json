@@ -11,6 +11,7 @@
         "php": "^7.2.5|^8.0",
         "akaunting/setting": "^1.1",
         "anhskohbo/no-captcha": "^3.4",
+        "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "^0.8.7",
         "benwilkins/laravel-fcm-notification": "^4.0",
         "doctrine/dbal": "^3.0",
@@ -28,7 +29,10 @@
         "mailgun/mailgun-php": "^3.2",
         "nyholm/psr7": "^1.3",
         "pawlox/video-thumbnail": "^3.0",
+        "pragmarx/google2fa-laravel": "^2.3",
+        "pragmarx/google2fa-qrcode": "^3.0",
         "srmklive/paypal": "^1.7",
+        "stevebauman/location": "^7.6",
         "stripe/stripe-php": "^7.49",
         "vidhyar2612/enveditor": "^1.3"
     },

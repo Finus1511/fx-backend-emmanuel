@@ -4,9 +4,11 @@ use Carbon\Carbon;
 
 // Helper, Setting, Log;
 
-use App\Models\{User, PageCounter, Settings, VirtualExperienceBooking, VirtualExperience, OrderProduct, OrderPayment, LssProductPayment, LiveStreamShopping};
+use App\Models\{User, PageCounter, Settings, VirtualExperienceBooking, VirtualExperience, OrderProduct, OrderPayment, LssProductPayment, LiveStreamShopping, PostPayment};
 
 use App\Models\{SubscriptionPayment, LssPayment, PromoCode, UserPromoCode, Collection, CollectionPayment, VeOneOnOne, VeOneOnOneBooking, VeVip, VeVipBooking};
+
+use App\Models\{UserTip, UserSubscriptionPayment, UserWalletPayment, VideoCallPayment, AudioCallPayment, ChatAssetPayment, LiveVideoPayment};
 
 use App\Repositories\CommonRepository as CommonRepo;
 
@@ -1953,4 +1955,226 @@ function ve_vip_booking_status_formatted($status) {
     ];
 
     return isset($status_list[$status]) ? $status_list[$status] : tr('raised');
+}
+
+function last_x_months_content_creator_revenue($months, $user_id) {
+
+    $start  = new \DateTime('-12 month', new \DateTimeZone('UTC'));
+    
+    $period = new \DatePeriod($start, new \DateInterval('P1M'), $months);
+   
+    $last_x_days_earning = [];
+
+    $post_ids = \App\Models\Post::where('user_id', $user_id)->pluck('id');
+
+    foreach ($period as $date) {
+
+        $month = $date->format('m');
+
+        $year = $date->format('Y');
+
+        $sum_value = Setting::get('is_only_wallet_payment') ? 'user_token' : 'user_amount';
+      
+        $last_x_days_subscription_earnings = \App\Models\UserSubscriptionPayment::where('to_user_id',$user_id)
+                                            ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)
+                                            ->where('status' , PAID)->sum($sum_value);
+
+        $last_x_days_order_earnings =  \App\Models\UserWalletPayment::
+                                        where(['user_id' => $user_id, 'usage_type' => USAGE_TYPE_ORDER, 'payment_type' => WALLET_PAYMENT_TYPE_CREDIT, 'status' => PAID])
+                                        ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status' , PAID)
+                                        ->sum($sum_value);
+
+        $last_x_days_post_earnings = \App\Models\PostPayment::whereIn('post_id', $post_ids)
+                                    ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status' , PAID)
+                                    ->sum($sum_value);
+
+        $last_x_days_user_tips = \App\Models\UserTip::where('to_user_id', $user_id)
+                                ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status',PAID)
+                                ->sum($sum_value);
+
+        $last_x_days_video_call = \App\Models\VideoCallPayment::where('model_id', $user_id)
+                                ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status',PAID)
+                                ->sum($sum_value);
+
+        $last_x_days_audio_call = \App\Models\AudioCallPayment::where('model_id', $user_id)
+                                ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status',PAID)
+                                ->sum($sum_value);
+
+        $last_x_days_chat_asset = \App\Models\ChatAssetPayment::where('from_user_id', $user_id)
+                                ->whereMonth('paid_date', '=', $month)->whereYear('paid_date', $year)->where('status',PAID)
+                                ->sum($sum_value);
+
+        $last_x_days_live_video = \App\Models\LiveVideoPayment::where(['user_id' => $user_id, 'status' => PAID])
+                                ->whereMonth('created_at', '=', $month)->whereYear('created_at', $year)
+                                ->sum($sum_value);
+
+        $total_earning = ($last_x_days_subscription_earnings + $last_x_days_order_earnings + $last_x_days_user_tips + $last_x_days_post_earnings + $last_x_days_video_call + $last_x_days_audio_call + $last_x_days_chat_asset + $last_x_days_live_video) ?? 0.00;
+
+        $graph_data = [
+            'date' => $date->getTimestamp() * 1000,
+            'value' => $total_earning,
+        ];
+
+        array_push($last_x_days_earning, $graph_data);
+
+    }
+        
+    return $last_x_days_earning;  
+}
+
+function total_revenue_breakdown($user_id) {
+
+    $data = new \stdClass;
+
+    $last_x_days_earning = [];
+
+    $post_ids = \App\Models\Post::where('user_id', $user_id)->pluck('id');
+
+    $sum_value = Setting::get('is_only_wallet_payment') ? 'user_token' : 'user_amount';
+  
+    $subscription_earnings = \App\Models\UserSubscriptionPayment::where('to_user_id',$user_id)->where('status' , PAID)->sum($sum_value);
+
+    $order_earnings =  \App\Models\UserWalletPayment::
+                                    where(['user_id' => $user_id, 'usage_type' => USAGE_TYPE_ORDER, 'payment_type' => WALLET_PAYMENT_TYPE_CREDIT, 'status' => PAID])->where('status' , PAID)->sum($sum_value);
+
+    $post_earnings = PostPayment::whereIn('post_id', $post_ids)->where('status' , PAID)->sum($sum_value);
+
+    $user_tips = UserTip::where('to_user_id', $user_id)->where('status',PAID)->sum($sum_value);
+
+    $video_call = VideoCallPayment::where('model_id', $user_id)->where('status',PAID)->sum($sum_value);
+
+    $audio_call = AudioCallPayment::where('model_id', $user_id)->where('status',PAID)->sum($sum_value);
+
+    $chat_asset = ChatAssetPayment::where('from_user_id', $user_id)->where('status',PAID)->sum($sum_value);
+
+    $live_video = LiveVideoPayment::where(['user_id' => $user_id, 'status' => PAID])->sum($sum_value);
+
+    $total_earning = ($subscription_earnings + $order_earnings + $user_tips + $post_earnings + $video_call + $audio_call + $chat_asset + $live_video) ?? 0.00;
+
+    $graph_data = [
+        [
+            'category' => "Post",
+            'value' => $post_earnings,
+        ], [
+            'category' => "Subscription",
+            'value' => $subscription_earnings,
+        ], [
+            'category' => "E-com",
+            'value' => $order_earnings,
+        ], [
+            'category' => "Tips",
+            'value' => $user_tips,
+        ], [
+            'category' => "Video Call",
+            'value' => $video_call,
+        ], [
+            'category' => "Audio Call",
+            'value' => $audio_call,
+        ], [
+            'category' => "Chat Asset",
+            'value' => $chat_asset,
+        ], [
+            'category' => "Live Video",
+            'value' => $live_video,
+        ]
+    ];
+    
+    return $graph_data;  
+}
+
+function total_and_today_revenue($user_id) {
+
+    $today_start = Carbon::today()->startOfDay();
+
+    $today_end   = Carbon::today()->endOfDay();
+
+    $sum_value = Setting::get('is_only_wallet_payment') ? 'user_token' : 'user_amount';
+
+    $post_ids = \App\Models\Post::where('user_id', $user_id)->pluck('id');
+
+    $post_earnings = PostPayment::whereIn('post_id', $post_ids)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $user_tips = UserTip::where('to_user_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $subscription_earnings = UserSubscriptionPayment::where('to_user_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $order_earnings = UserWalletPayment::where(['user_id' => $user_id, 'usage_type' => USAGE_TYPE_ORDER, 'payment_type' => WALLET_PAYMENT_TYPE_CREDIT, 'status' => PAID])
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $video_call = VideoCallPayment::where('model_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $audio_call = AudioCallPayment::where('model_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $chat_asset = ChatAssetPayment::where('from_user_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+    $live_video = LiveVideoPayment::where('user_id', $user_id)
+        ->where('status', PAID)
+        ->selectRaw("
+            COALESCE(SUM($sum_value), 0) as total,
+            COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN $sum_value ELSE 0 END), 0) as today
+        ", [$today_start, $today_end])
+        ->first();
+
+
+    $data['total_earning'] = 
+        $subscription_earnings->total +
+        $order_earnings->total +
+        $user_tips->total +
+        $post_earnings->total +
+        $video_call->total +
+        $audio_call->total +
+        $chat_asset->total +
+        $live_video->total;
+
+    $data['today_earning'] = 
+        $subscription_earnings->today +
+        $order_earnings->today +
+        $user_tips->today +
+        $post_earnings->today +
+        $video_call->today +
+        $audio_call->today +
+        $chat_asset->today +
+        $live_video->today;
+    
+    return $data;  
 }

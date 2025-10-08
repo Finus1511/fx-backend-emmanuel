@@ -14,7 +14,7 @@ use App\Models\User, App\Models\PostPayment, App\Models\Follower, App\Models\Use
 
 use App\Models\Post, App\Models\PostFile, App\Models\PromoCode, App\Models\VideoCallPayment, App\Models\AudioCallPayment;
 
-use App\Models\{CategoryDetail, UserSubscriptionPayment, PostLike, UserWallet, UserTip, UserLoginSession, LiveStreamShopping, LssPayment, LssProductPayment, LssProduct, ChatMessagePayment};
+use App\Models\{CategoryDetail, UserSubscriptionPayment, PostLike, UserWallet, UserTip, UserLoginSession, LiveStreamShopping, LssPayment, LssProductPayment, LssProduct, ChatMessagePayment, Visitor};
 
 use App\Models\ChatAssetPayment, App\Models\Category, App\Models\LiveVideo;
 
@@ -30,6 +30,11 @@ use App\Http\Resources\{UserPreviewResource};
 
 use Illuminate\Validation\Rule;
 
+use Stevebauman\Location\Facades\Location;
+
+use Illuminate\Support\Facades\Storage;
+
+use PragmaRX\Google2FAQRCode\Google2FA;
 
 class UserAccountApiController extends Controller
 {
@@ -2656,6 +2661,10 @@ class UserAccountApiController extends Controller
                 throw new Exception(api_error(266), 266);
             }
 
+            $ip = request()->ip();
+
+            $geo = Location::get($ip);
+            
             $request->request->add(['user_id' => $user->id]);
 
             $user->updated_formatted = common_date($user->updated_at, $this->timezone, 'd M Y');
@@ -2708,6 +2717,13 @@ class UserAccountApiController extends Controller
             $user->is_user_live = $user_live_videos->count() ? IS_STREAMING_YES : IS_STREAMING_NO;
 
             $user->ongoing_live_video = $user_live_videos->first();
+
+            Visitor::create([
+                'user_id'   => $user->user_id,
+                'ip_address'   => $ip,
+                'country'      => $geo->countryName ?? null,
+                'country_code' => $geo->countryCode ?? null, // e.g., "US"
+            ]);
 
             return $this->sendResponse($message = "", $code = "", $data);
 
@@ -4443,6 +4459,73 @@ class UserAccountApiController extends Controller
 
             return $this->sendError($e->getMessage(), $e->getCode());
         }
+    }
+
+    public function get_2fa_details(Request $request) {
+
+        try {
+
+            $user = User::find($request->id);
+
+            $data['email'] = $user->email;
+
+            $google2fa = new Google2FA();
+
+            $data['google2fa_secret'] = $user->google2fa_secret;
+
+            $data['qr_code_url'] = app('pragmarx.google2fa')->getQRCodeUrl(Setting::get('site_name'), $user->email, $user->google2fa_secret);
+
+            $data['qr_code'] = $google2fa->getQRCodeInline(
+                                    Setting::get('site_name'),
+                                    $user->email,
+                                    $user->google2fa_secret
+                                );
+
+            $data['qr_code_png'] = url(Storage::url('qr_codes/' . $user->unique_id . '.png'));
+
+            return $this->sendResponse('', '', $data);
+
+        } catch(Exception $e) {
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function enable_disable_2fa(Request $request) {
+
+        try {
+
+            DB::beginTransaction();
+
+            $rules = [ 'password' => 'required', 'verification_code' => 'required'];
+
+            Helper::custom_validator($request->all(), $rules, $custom_errors = []);
+
+            $user = User::find($request->id);
+
+            $google2fa = app('pragmarx.google2fa');
+
+            $valid = $google2fa->verifyKey($user->google2fa_secret, $request->verification_code);
+
+            throw_if(!$valid, new Exception(api_error(339), 339));
+
+            throw_if(!Hash::check($request->password, $user->password), new Exception(api_error(108), 108));
+
+            $user->update(['is_2fa_enabled' => $user->is_2fa_enabled ? NO : YES]);
+
+            DB::commit();
+
+            $data['user'] = $user->refresh();
+
+            return $this->sendResponse($user->is_2fa_enabled ? api_success(845) : api_success(846), $user->is_2fa_enabled ? 845 : 846, $data);
+
+        } catch(Exception $e) {
+
+            DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+        }
+
     }
 
 }

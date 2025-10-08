@@ -452,4 +452,6 @@ return [
 
     338 => 'The virtaul experience is not eligible to accept',
 
+    339 => "Invalid Verification Code or Code Expired",
+
 ];

@@ -9,13 +9,21 @@ class Collection extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+
     public function user() {
        return $this->belongsTo(User::class, 'user_id');
     }
+
     public function collectionFiles()
     {
         return $this->hasMany(CollectionFile::class, 'collection_id');
     }
+
+    public function collectionPayments() {
+
+        return $this->hasMany(CollectionPayment::class,'collection_id');
+    }
+
     public static function boot() {
         parent::boot();
         static::creating(function ($model) {

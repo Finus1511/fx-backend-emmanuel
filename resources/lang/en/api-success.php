@@ -350,6 +350,10 @@ return [
 
     843 => "The promo code is deactivated.",
 
-    844 => "The chat message payment was done.!"
+    844 => "The chat message payment was done.!",
+
+    845 => "2FA enabled successfully.",
+
+    846 => "2FA disabled successfully.",
 
 ];
