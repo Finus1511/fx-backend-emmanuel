@@ -955,6 +955,65 @@ class PostsApiController extends Controller
     }
 
     /**
+     * @method update_post_files()
+     *
+     * @uses get the selected post details
+     *
+     * @created Vithya R
+     *
+     * @updated Vithya R
+     *
+     * @param integer $subscription_id
+     *
+     * @return JSON Response
+     */
+    public function update_post_files(Request $request) {
+
+        try {
+
+            $rules = [
+                'picture' => 'required',
+                'post_file' => 'required'
+            ];
+
+            Helper::custom_validator($request->all(),$rules);
+
+            DB::begintransaction();
+
+            $user = User::find($request->id);
+
+            $post_file = PostFile::where([
+                    'user_id' => $user->id,
+                    'file' => $request->input('post_file'),
+                ])->first();
+
+            throw_if(!$post_file, new Exception(tr('post_not_found'), 100));
+
+            $uploaded_file = Helper::storage_upload_file_base($request->picture, POST_PATH);
+
+            $post_file->update([
+                'file' => $uploaded_file
+            ]);
+
+            DB::commit();
+
+            $data['post_file'] = $post_file->refresh();
+
+            $data['uploaded_file'] = $uploaded_file;
+
+           return $this->sendResponse(api_success(151), 151, $data);
+
+        } catch(Exception $e){ 
+
+            DB::rollback();
+
+            return $this->sendError($e->getMessage(), $e->getCode());
+
+        } 
+    
+    }
+
+    /**
      * @method post_files_remove()
      *
      * @uses remove the selected file

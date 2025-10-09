@@ -728,6 +728,32 @@ class Helper {
 
     }
 
+    public static function storage_upload_file_base($input_file, $folder_path = COMMON_FILE_PATH)
+    {
+
+        $ext = explode('/', explode(':', substr($input_file, 0, strpos($input_file, ';')))[1])[1];
+
+        $replace = substr($input_file, 0, strpos($input_file, ',') + 1);
+
+        $image = str_replace($replace, '', $input_file);
+
+        $image = str_replace(' ', '+', $image);
+
+        $file_name = self::generate_random_string() . "." . $ext;
+
+        $storage_file_path = $folder_path . $file_name;
+
+        Storage::disk('public')->put($storage_file_path, base64_decode($image));
+
+        return asset(Storage::url($storage_file_path));
+    }
+
+    public static function generate_random_string()
+    {
+
+        return sha1(time() . rand());
+    }
+
     /**
      * @method upload_file
      */
